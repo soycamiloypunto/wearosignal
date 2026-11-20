@@ -6,7 +6,7 @@
 
 Cliente independiente y open source de **Signal para Wear OS**, diseñado y optimizado para relojes inteligentes desde **Samsung Galaxy Watch 4 en adelante** (Wear OS 3+ / API 30+, arquitecturas `armeabi-v7a` y `arm64-v8a`).
 
-**Developed by Cristian Camilo** · [Página oficial / Documentación](https://soycamiloypunto.github.io/wearosignal/) · [Releases (APK)](https://github.com/soycamiloypunto/wearosignal/releases)
+**Developed by Cristian Camilo** · [Página oficial / Documentación](https://soycamiloypunto.github.io/wearosignal/) · [Política de Privacidad](https://soycamiloypunto.github.io/wearosignal/#privacy)
 
 > **Aviso legal**: WearOSignal es un cliente independiente y no oficial para Signal, no afiliado ni respaldado por Signal Messenger, LLC. Distribuido bajo licencia **GNU AGPLv3** ([LICENSE](LICENSE)).
 
@@ -52,19 +52,21 @@ Cliente independiente y open source de **Signal para Wear OS**, diseñado y opti
 
 ---
 
-## Compilación e instalación por ADB inalámbrico
+## Compilación desde código fuente
 
 Requisitos: **JDK 17+** (probado con OpenJDK 21), **Android SDK Platform 36**, **NDK `27.2.12479018`** y `platform-tools` (`adb`).
 
 ```powershell
-# 1. Compilar APK debug
+# 1. Compilar desde el código fuente
 .\gradlew.bat :app:assembleDebug
 
-# 2. Emparejar e instalar en Samsung Galaxy Watch (Opciones de desarrollador -> Depuración inalámbrica)
+# 2. Instalar en reloj Wear OS en modo desarrollador (ADB inalámbrico)
 adb pair <IP>:<PUERTO_EMPAREJAMIENTO>
 adb connect <IP>:<PUERTO>
 adb install -r --no-streaming app\build\outputs\apk\debug\app-debug.apk
 ```
+
+> La versión precompilada y con actualizaciones automáticas se distribuirá oficialmente a través de **Google Play Store**.
 
 ---
 

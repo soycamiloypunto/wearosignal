@@ -143,7 +143,7 @@
       <nav class="nav-links">
         <a href="#features">Funciones</a>
         <a href="#architecture">Arquitectura</a>
-        <a href="#install">Instalación</a>
+        <a href="#build">Compilación</a>
         <a href="#privacy">Privacidad</a>
         <a href="#license">Licencia</a>
       </nav>
@@ -161,7 +161,7 @@
         visualiza fotos, stickers, GIFs animados y videos directo desde tu muñeca.
       </p>
       <div class="cta-row">
-        <a class="btn btn-primary" href="https://github.com/soycamiloypunto/wearosignal/releases">Descargar última versión (APK)</a>
+        <a class="btn btn-primary" href="#build">Compilar desde código fuente</a>
         <a class="btn btn-secondary" href="https://github.com/soycamiloypunto/wearosignal">Ver código fuente en GitHub</a>
       </div>
     </div>
@@ -233,16 +233,16 @@
       </table>
     </section>
 
-    <section id="install">
-      <h2>Instalación por ADB inalámbrico</h2>
-      <p class="section-lead">Descarga el APK desde <a href="https://github.com/soycamiloypunto/wearosignal/releases">Releases</a> o compílalo desde el código fuente:</p>
-      <pre><code># Compilar desde fuente
+    <section id="build">
+      <h2>Compilación desde código fuente</h2>
+      <p class="section-lead">La versión oficial lista para instalar con actualizaciones automáticas estará disponible en <strong>Google Play Store</strong>. Si deseas compilarla por tu cuenta desde el código abierto:</p>
+      <pre><code># Compilar desde fuente (requiere JDK 17+, Android SDK 36 y NDK 27.2.12479018)
 .\gradlew.bat :app:assembleDebug
 
-# Vincular e instalar en Samsung Galaxy Watch
+# Instalar en reloj Wear OS mediante ADB inalámbrico
 adb pair &lt;IP&gt;:&lt;PUERTO_EMPAREJAMIENTO&gt;
 adb connect &lt;IP&gt;:&lt;PUERTO&gt;
-adb install -r --no-streaming wearosignal-v0.0.2-debug.apk</code></pre>
+adb install -r --no-streaming app\build\outputs\apk\debug\app-debug.apk</code></pre>
     </section>
 
     <section id="privacy">
