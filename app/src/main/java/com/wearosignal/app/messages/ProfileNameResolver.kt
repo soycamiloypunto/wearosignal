@@ -1,0 +1,87 @@
+package com.wearosignal.app.messages
+
+import android.content.ContentValues
+import com.wearosignal.app.AppDeps
+import kotlinx.coroutines.runBlocking
+import org.signal.core.models.ServiceId.ACI
+import org.signal.core.util.Base64
+import org.signal.core.util.logging.Log
+import org.signal.libsignal.zkgroup.profiles.ProfileKey
+import org.signal.network.NetworkResult
+import org.whispersystems.signalservice.api.crypto.ProfileCipher
+
+/**
+ * Resolves ACIs to display names using harvested profile keys: fetch the versioned
+ * profile, decrypt the name with the profile key, and cache it in the contacts table.
+ */
+object ProfileNameResolver {
+
+  private val TAG = Log.tag(ProfileNameResolver::class)
+  private const val REFRESH_INTERVAL_MS = 7L * 24 * 60 * 60 * 1000
+
+  /** Contacts with a profile key whose avatar was never attempted (pre-avatar rows to backfill). */
+  fun pendingAvatarAcis(): List<String> {
+    val result = mutableListOf<String>()
+    AppDeps.database.readableDatabase.rawQuery(
+      "SELECT aci FROM contacts WHERE profile_key IS NOT NULL AND avatar_fetched_at = 0",
+      emptyArray()
+    ).use { cursor ->
+      while (cursor.moveToNext()) result += cursor.getString(0)
+    }
+    return result
+  }
+
+  /**
+   * Fetches names for any senders that have a profile key but no (or stale) cached name.
+   * Call while the websocket is usable; never throws.
+   */
+  fun resolvePending(senderAcis: Collection<String>) {
+    if (senderAcis.isEmpty()) return
+
+    val db = AppDeps.database
+    val now = System.currentTimeMillis()
+
+    for (aciString in senderAcis.distinct()) {
+      try {
+        val (profileKeyBytes, fetchedAt, avatarFetchedAt) = db.readableDatabase.rawQuery(
+          "SELECT profile_key, fetched_at, avatar_fetched_at FROM contacts WHERE aci = ?",
+          arrayOf(aciString)
+        ).use { cursor ->
+          if (!cursor.moveToFirst() || cursor.isNull(0)) continue
+          Triple(cursor.getBlob(0), cursor.getLong(1), cursor.getLong(2))
+        }
+
+        // Refetch when the name is stale, or once to backfill the avatar for contacts
+        // resolved before avatars existed.
+        if (now - fetchedAt < REFRESH_INTERVAL_MS && avatarFetchedAt > 0) continue
+
+        val aci = ACI.parseOrNull(aciString) ?: continue
+        val profileKey = ProfileKey(profileKeyBytes)
+
+        val result = runBlocking { AppDeps.net.profileApi.getVersionedProfile(aci, profileKey, null) }
+        if (result !is NetworkResult.Success) {
+          Log.w(TAG, "Profile fetch for $aciString failed: $result")
+          continue
+        }
+
+        val encryptedName = result.result.name
+        val name = if (encryptedName.isNullOrEmpty()) {
+          null
+        } else {
+          ProfileCipher(profileKey).decryptString(Base64.decode(encryptedName))
+        }
+
+        val values = ContentValues().apply {
+          put("name", name?.replace('\u0000', ' ')?.trim())
+          put("fetched_at", now)
+          put("avatar_fetched_at", now)
+        }
+        AppDeps.avatars.update(aciString, profileKey, result.result.avatar)
+        db.writableDatabase.update("contacts", values, "aci = ?", arrayOf(aciString))
+        Log.i(TAG, "Resolved profile name for $aciString")
+      } catch (t: Throwable) {
+        Log.w(TAG, "Failed to resolve name for $aciString", t)
+      }
+    }
+  }
+}

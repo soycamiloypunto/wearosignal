@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">WearOSignal</string>
+    <string name="tile_label">WearOSignal</string>
+    <string name="complication_label">WearOSignal unread</string>
+
+    <!-- Pairing -->
+    <string name="pairing_qr_description">Pairing QR code</string>
+    <string name="pairing_linking">Linking…</string>
+    <string name="pairing_retry">Retry</string>
+    <string name="pairing_hint">Scan in Signal → Linked devices</string>
+
+    <!-- Conversations -->
+    <string name="conversations_check">Check for messages</string>
+    <string name="conversations_checking">Checking…</string>
+    <string name="conversations_empty">No conversations yet</string>
+    <string name="conversations_load_more">Load more</string>
+    <string name="conversations_new_message">New message</string>
+    <string name="conversations_settings">Settings</string>
+
+    <!-- Thread -->
+    <string name="thread_reply">Reply</string>
+    <string name="thread_message_label">Message %1$s</string>
+    <string name="thread_react_label">React with an emoji</string>
+
+    <!-- Compose -->
+    <string name="compose_title">New message</string>
+    <string name="compose_refresh">Refresh contacts</string>
+    <string name="compose_refreshing">Refreshing…</string>
+    <string name="compose_looking_up">Looking up contacts…</string>
+    <string name="compose_no_contacts">No contacts found on watch</string>
+    <string name="compose_none_on_signal">Read %1$d numbers, none on Signal</string>
+    <string name="compose_found_on_signal">%1$d of %2$d on Signal</string>
+    <string name="compose_rate_limited">Rate limited — retry in %1$ds</string>
+    <string name="compose_permission_needed">Contacts permission needed</string>
+
+    <!-- Settings / Status -->
+    <string name="status_not_linked">Not linked</string>
+    <string name="status_never_polled">Never polled</string>
+    <string name="status_last_poll">Last poll: %1$s</string>
+    <string name="status_notifications_on">Notifications: on</string>
+    <string name="status_notifications_off">Notifications: off</string>
+    <string name="status_polls_every">Polls every %1$d min</string>
+    <string name="status_phone_forwards">Phone forwards only</string>
+    <string name="status_interval">Interval: %1$d min</string>
+    <string name="status_read_receipts_on">Read receipts: on</string>
+    <string name="status_read_receipts_off">Read receipts: off</string>
+    <string name="status_read_receipts_on_desc">Senders see when you read</string>
+    <string name="status_read_receipts_off_desc">Only your phone syncs</string>
+    <string name="status_lockscreen_private">Lock screen: Private</string>
+    <string name="status_lockscreen_show">Lock screen: Show all</string>
+    <string name="status_lockscreen_private_desc">Hides name &amp; message</string>
+    <string name="status_lockscreen_show_desc">Shows preview on lock</string>
+    <string name="status_phone_auto">Phone: auto</string>
+    <string name="status_phone_connected">Phone: connected</string>
+    <string name="status_phone_away">Phone: away</string>
+    <string name="status_unlink">Unlink watch</string>
+    <string name="status_unlink_confirm">Tap again to unlink</string>
+    <string name="status_unlink_desc">Clears local chats &amp; keys</string>
+    <string name="status_about">Developed by Cristian Camilo\nUnofficial Signal client • AGPLv3</string>
+</resources>
