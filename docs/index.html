@@ -247,12 +247,19 @@ adb install -r --no-streaming app\build\outputs\apk\debug\app-debug.apk</code></
 
     <section id="privacy">
       <h2>Política de Privacidad</h2>
-      <p class="section-lead">WearOSignal está construido con privacidad por diseño y cero recolección de datos por parte del desarrollador.</p>
+      <p class="section-lead">Última actualización: noviembre de 2026 · Desarrollador: <strong>Cristian Camilo</strong> (<a href="mailto:cktv8822@gmail.com">cktv8822@gmail.com</a>). <a href="privacy.html">Ver página independiente</a>.</p>
       <ul>
-        <li><strong>Sin servidores propios ni intermediarios:</strong> la aplicación se comunica exclusivamente con los servidores oficiales de Signal mediante cifrado de extremo a extremo.</li>
-        <li><strong>Sin analíticas ni publicidad:</strong> no incluye Firebase, Crashlytics, rastreadores ni SDKs de terceros.</li>
-        <li><strong>Almacenamiento local:</strong> tus mensajes, claves de sesión y caché multimedia (retención automática de 7 días / 64 MB) residen únicamente en tu reloj y pueden eliminarse por completo desde <em>Ajustes → Desvincular reloj</em>.</li>
-        <li><strong>Permisos mínimos:</strong> <code>RECORD_AUDIO</code> se usa solo al grabar una nota de voz; <code>READ_CONTACTS</code> solo para consultar contactos locales en el directorio privado CDSI de Signal.</li>
+        <li><strong>Sin servidores propios ni recolección de datos:</strong> WearOSignal no opera servidores propios, no recopila datos personales ni incluye analíticas, telemetría, publicidad o SDKs de rastreo (sin Firebase ni Crashlytics).</li>
+        <li><strong>Comunicación directa con Signal:</strong> todos los mensajes, reacciones y archivos multimedia se transmiten cifrados de extremo a extremo directamente entre tu reloj y los servidores oficiales de Signal (<code>*.signal.org</code>).</li>
+        <li><strong>Permisos y datos tratados localmente:</strong>
+          <ul>
+            <li><strong>Micrófono (<code>RECORD_AUDIO</code>):</strong> se utiliza únicamente cuando el usuario inicia manualmente la grabación de una nota de voz. El archivo temporal se borra inmediatamente tras el envío cifrado.</li>
+            <li><strong>Contactos (<code>READ_CONTACTS</code>):</strong> opcional; se usa solo al pulsar <em>Actualizar contactos</em> para consultar qué números de tu agenda están registrados en Signal mediante CDSI (enclave SGX). Los contactos nunca se envían al desarrollador.</li>
+            <li><strong>Notificaciones (<code>POST_NOTIFICATIONS</code>):</strong> se utiliza únicamente para mostrar avisos de mensajes entrantes en el reloj.</li>
+          </ul>
+        </li>
+        <li><strong>Seguridad, retención y eliminación de datos:</strong> las claves y credenciales locales se cifran con <strong>Android Keystore (AES-256-GCM)</strong>. La caché multimedia local se elimina automáticamente a los 7 días (límite de 64 MB). Puedes borrar el 100% de tus datos locales en cualquier momento desde <em>Ajustes → Desvincular reloj</em> o desinstalando la aplicación.</li>
+        <li><strong>Contacto y soporte:</strong> para consultas de privacidad o eliminación de datos, escribe a <a href="mailto:cktv8822@gmail.com">cktv8822@gmail.com</a>.</li>
       </ul>
     </section>
 
