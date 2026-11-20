@@ -7,10 +7,18 @@
 -keepattributes *Annotation*, Signature, InnerClasses, EnclosingMethod
 
 # Keep our own Wire-generated protobuf classes
--keep class com.wearosignal.app.proto.** { *; }
+-keep class com.wearosignal.app.protos.** { *; }
+
+# Keep Room, WorkManager, Startup, and ViewModel reflection constructors under R8 fullMode
+-keep class * extends androidx.room.RoomDatabase { <init>(); }
+-keep class androidx.work.impl.WorkDatabase_Impl { *; }
+-keep class * extends androidx.work.ListenableWorker { <init>(...); }
+-keep class * extends androidx.startup.Initializer { <init>(); }
+-keep class * extends androidx.lifecycle.ViewModel { <init>(...); }
 
 # Keep Android / Wear services & receivers referenced from Manifest
 -keep class com.wearosignal.app.tile.RecentTileService { *; }
+-keep class com.wearosignal.app.tile.TilePollWorker { *; }
 -keep class com.wearosignal.app.complication.UnreadComplicationService { *; }
 -keep class com.wearosignal.app.poll.** { *; }
 -keep class com.wearosignal.app.notify.** { *; }
