@@ -17,6 +17,8 @@
 
 # Suppress harmless missing-class warnings from desktop JVM libraries pulled by libsignal-service
 -dontwarn java.lang.instrument.**
+-dontwarn java.beans.**
+-dontwarn org.w3c.dom.bootstrap.**
 -dontwarn javax.naming.**
 -dontwarn org.conscrypt.**
 -dontwarn org.bouncycastle.**
