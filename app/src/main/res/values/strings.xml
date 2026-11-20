@@ -22,6 +22,18 @@
     <string name="thread_reply">Reply</string>
     <string name="thread_message_label">Message %1$s</string>
     <string name="thread_react_label">React with an emoji</string>
+    <string name="thread_emoji_label">Send an emoji</string>
+    <string name="thread_voice_recording">Recording…</string>
+    <string name="thread_voice_sending">Sending voice note…</string>
+    <string name="thread_voice_mic_needed">Microphone permission needed</string>
+    <string name="thread_audio_play">▶ Audio</string>
+    <string name="thread_audio_stop">⏹ Stop</string>
+    <string name="thread_video_play">▶ Video</string>
+    <string name="thread_emoji_edit_hint">Tap a slot to change</string>
+    <string name="thread_emoji_pick_favorite">Pick favorite emoji</string>
+    <string name="thread_quick_edit">Edit quick replies</string>
+    <string name="thread_quick_done">Done editing</string>
+    <string name="thread_quick_edit_label">Edit quick reply</string>
 
     <!-- Compose -->
     <string name="compose_title">New message</string>

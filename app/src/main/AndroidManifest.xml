@@ -9,6 +9,7 @@
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <!-- Read the watch's synced contacts to offer them as message recipients (resolved to Signal accounts via CDSI). -->
     <uses-permission android:name="android.permission.READ_CONTACTS" />
 

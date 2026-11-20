@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WearOSignal — Cliente de Signal para Wear OS</title>
+  <meta name="description" content="WearOSignal: cliente open source de Signal para Wear OS (Samsung Galaxy Watch 4+). Notas de voz con ondas en vivo, emojis favoritos, respuestas rápidas, stickers, GIFs, fotos y videos." />
+  <link rel="icon" type="image/png" href="icon/icon.png" />
+  <style>
+    :root {
+      --bg: #0b0d17;
+      --surface: #131728;
+      --surface-alt: #1a2038;
+      --border: rgba(130, 150, 255, 0.16);
+      --text: #eef2ff;
+      --muted: #9aa6c9;
+      --accent-1: #3b82f6;
+      --accent-2: #7c3aed;
+      --accent-3: #38bdf8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, sans-serif;
+      background: radial-gradient(circle at 20% 0%, rgba(59, 130, 246, 0.18), transparent 45%),
+                  radial-gradient(circle at 85% 15%, rgba(124, 58, 237, 0.18), transparent 45%),
+                  var(--bg);
+      color: var(--text);
+      line-height: 1.65;
+    }
+    a { color: var(--accent-3); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .container { max-width: 1020px; margin: 0 auto; padding: 0 20px; }
+
+    header {
+      position: sticky; top: 0; z-index: 20;
+      backdrop-filter: blur(12px);
+      background: rgba(11, 13, 23, 0.8);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav {
+      display: flex; align-items: center; justify-content: space-between;
+      height: 64px;
+    }
+    .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1.08rem; color: var(--text); }
+    .brand img { width: 32px; height: 32px; border-radius: 50%; background: #fff; padding: 2px; }
+    .nav-links { display: flex; gap: 20px; font-size: 0.92rem; }
+    .nav-links a { color: var(--muted); }
+    .nav-links a:hover { color: var(--text); text-decoration: none; }
+
+    .hero { text-align: center; padding: 72px 0 56px; }
+    .hero-icon {
+      width: 120px; height: 120px; border-radius: 50%; background: #fff; padding: 10px;
+      box-shadow: 0 18px 50px rgba(124, 58, 237, 0.35);
+      margin-bottom: 24px;
+    }
+    .badge {
+      display: inline-block; padding: 5px 12px; border-radius: 999px;
+      font-size: 0.8rem; font-weight: 600; letter-spacing: 0.02em;
+      background: rgba(56, 189, 248, 0.12); color: var(--accent-3);
+      border: 1px solid rgba(56, 189, 248, 0.3); margin-bottom: 16px;
+    }
+    h1 {
+      font-size: clamp(2.1rem, 5vw, 3.3rem);
+      font-weight: 800; letter-spacing: -0.02em; margin-bottom: 14px;
+      background: linear-gradient(120deg, #fff 20%, #93c5fd 60%, #c084fc 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .hero p { max-width: 680px; margin: 0 auto 28px; color: var(--muted); font-size: 1.08rem; }
+    .cta-row { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 12px 22px; border-radius: 12px; font-weight: 600; font-size: 0.95rem;
+      transition: transform 0.15s ease, opacity 0.15s ease;
+    }
+    .btn:hover { transform: translateY(-1px); text-decoration: none; }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+      color: #fff; box-shadow: 0 10px 28px rgba(59, 130, 246, 0.3);
+    }
+    .btn-secondary {
+      background: var(--surface-alt); color: var(--text); border: 1px solid var(--border);
+    }
+
+    section { padding: 48px 0; border-top: 1px solid var(--border); }
+    h2 { font-size: 1.65rem; margin-bottom: 10px; letter-spacing: -0.01em; }
+    .section-lead { color: var(--muted); margin-bottom: 28px; max-width: 720px; }
+
+    .grid {
+      display: grid; gap: 16px;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    }
+    .card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 16px; padding: 20px;
+    }
+    .card h3 { font-size: 1.05rem; margin-bottom: 8px; color: #fff; }
+    .card p { font-size: 0.92rem; color: var(--muted); }
+
+    table {
+      width: 100%; border-collapse: collapse; margin-top: 12px;
+      background: var(--surface); border-radius: 14px; overflow: hidden;
+      border: 1px solid var(--border); font-size: 0.92rem;
+    }
+    th, td { padding: 13px 16px; text-align: left; border-bottom: 1px solid var(--border); }
+    th { background: var(--surface-alt); color: #fff; font-weight: 600; }
+    td { color: var(--muted); }
+    tr:last-child td { border-bottom: none; }
+    code {
+      font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+      background: rgba(148, 163, 184, 0.14); color: #e2e8f0;
+      padding: 2px 6px; border-radius: 6px; font-size: 0.86em;
+    }
+    pre {
+      background: #0a0d18; border: 1px solid var(--border);
+      border-radius: 12px; padding: 16px; overflow-x: auto;
+      font-size: 0.88rem; color: #dbeafe; margin-top: 12px;
+    }
+    ul { padding-left: 20px; color: var(--muted); }
+    li { margin-bottom: 8px; }
+    .notice {
+      background: rgba(124, 58, 237, 0.1);
+      border: 1px solid rgba(124, 58, 237, 0.35);
+      border-radius: 14px; padding: 18px 20px; margin-top: 16px;
+      font-size: 0.93rem; color: var(--text);
+    }
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 36px 0; text-align: center; color: var(--muted); font-size: 0.88rem;
+    }
+    @media (max-width: 640px) {
+      .nav-links { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container nav">
+      <div class="brand">
+        <img src="icon/icon.png" alt="WearOSignal" />
+        <span>WearOSignal</span>
+      </div>
+      <nav class="nav-links">
+        <a href="#features">Funciones</a>
+        <a href="#architecture">Arquitectura</a>
+        <a href="#install">Instalación</a>
+        <a href="#privacy">Privacidad</a>
+        <a href="#license">Licencia</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="hero">
+      <img class="hero-icon" src="icon/icon.png" alt="Logo WearOSignal" />
+      <div><span class="badge">Wear OS 3+ · Galaxy Watch 4 / 5 / 6 / 7 / Ultra · Open Source AGPLv3</span></div>
+      <h1>WearOSignal</h1>
+      <p>
+        Cliente independiente de Signal diseñado específicamente para relojes Wear OS.
+        Lee tus chats, responde con notas de voz en vivo, emojis favoritos, respuestas rápidas y
+        visualiza fotos, stickers, GIFs animados y videos directo desde tu muñeca.
+      </p>
+      <div class="cta-row">
+        <a class="btn btn-primary" href="https://github.com/soycamiloypunto/wearosignal/releases">Descargar última versión (APK)</a>
+        <a class="btn btn-secondary" href="https://github.com/soycamiloypunto/wearosignal">Ver código fuente en GitHub</a>
+      </div>
+    </div>
+
+    <section id="features">
+      <h2>Funciones diseñadas para tu reloj</h2>
+      <p class="section-lead">Pensado para pantallas circulares, interacción rápida con una sola mano y consumo responsable de batería.</p>
+      <div class="grid">
+        <div class="card">
+          <h3>Menú principal en círculos</h3>
+          <p>Cuadrícula circular de 3 avatares por fila con fotos descifradas de contactos y grupos, más botones circulares de Sincronizar, Nuevo chat y Ajustes.</p>
+        </div>
+        <div class="card">
+          <h3>Notas de voz con ondas dinámicas</h3>
+          <p>Grabación nativa en AAC/M4A con visualizador de 13 barras reactivas al micrófono en tiempo real, subida cifrada a Signal CDN V4 y reproducción directa en la burbuja.</p>
+        </div>
+        <div class="card">
+          <h3>9 emojis favoritos editables</h3>
+          <p>Envía tus emojis más usados con un toque y personaliza cualquiera de los 9 espacios desde el botón <strong>＋</strong> usando el teclado de emojis del reloj.</p>
+        </div>
+        <div class="card">
+          <h3>5 respuestas rápidas personalizables</h3>
+          <p>Desliza debajo de la barra <code>🎤 · 😊 · Aa</code> para enviar respuestas rápidas en un toque o edita las 5 frases a tu gusto.</p>
+        </div>
+        <div class="card">
+          <h3>Fotos, stickers, GIFs y videos</h3>
+          <p>Soporte completo para ver imágenes, stickers WebP, GIFs animados (<code>ImageDecoder</code> + <code>AnimatedImageDrawable</code>) y videos MP4 en pantalla completa.</p>
+        </div>
+        <div class="card">
+          <h3>Español, inglés y privacidad</h3>
+          <p>Interfaz localizada, pantalla de bloqueo privada, Tile de chats recientes, Complication de no leídos y botón para desvincular y borrar todos los datos locales.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="architecture">
+      <h2>Detalle técnico y seguridad</h2>
+      <p class="section-lead">Transparencia total sobre cómo se conecta WearOSignal, cómo cifra tus datos y por qué cumple con las políticas de Google Play.</p>
+      <table>
+        <thead>
+          <tr><th>Área</th><th>Detalle técnico</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Protocolo Signal</strong></td>
+            <td>Opera como <em>dispositivo vinculado</em> mediante QR de aprovisionamiento usando <code>org.signal:libsignal-android:0.94.4</code> y <code>lib:libsignal-service</code>.</td>
+          </tr>
+          <tr>
+            <td><strong>Servidores oficiales</strong></td>
+            <td>Conexión directa y exclusiva a <code>chat.signal.org</code>, <code>storage.signal.org</code>, <code>cdn/cdn2/cdn3.signal.org</code>, <code>cdsi.signal.org</code> y <code>svr2.signal.org</code> con el trust store oficial <code>whisper.store</code>.</td>
+          </tr>
+          <tr>
+            <td><strong>Adjuntos CDN V4</strong></td>
+            <td>Solicitud <code>GET /v4/attachments/form/upload?uploadLength=&lt;ciphertextLength&gt;</code> con padding Signal (<code>PaddingInputStream</code> + <code>AttachmentCipherStreamUtil</code>) y subida cifrada vía <code>ResumableUploadSpec</code>.</td>
+          </tr>
+          <tr>
+            <td><strong>Cifrado local en reposo</strong></td>
+            <td>Contraseña y claves de identidad (<code>aci_identity</code>, <code>pni_identity</code>, <code>profile_key</code>) protegidas con <strong>Android Keystore AES-256-GCM</strong> (<code>KeystoreSecretBox.kt</code>).</td>
+          </tr>
+          <tr>
+            <td><strong>Compatibilidad Wear OS</strong></td>
+            <td><code>minSdk = 30</code> (Wear OS 3+), <code>targetSdk = 35</code>, <code>compileSdk = 36</code>. Binarios nativos para <code>armeabi-v7a</code> y <code>arm64-v8a</code> (Galaxy Watch 4, 5, 6, 7, Ultra, Pixel Watch).</td>
+          </tr>
+          <tr>
+            <td><strong>Cumplimiento Play Store</strong></td>
+            <td>Sin <code>USE_EXACT_ALARM</code> ni <code>SCHEDULE_EXACT_ALARM</code> (usa <code>setAndAllowWhileIdle</code> + <code>WorkManager</code>), minificación R8/ProGuard en <code>release</code> y controles de debug ocultos en producción.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="install">
+      <h2>Instalación por ADB inalámbrico</h2>
+      <p class="section-lead">Descarga el APK desde <a href="https://github.com/soycamiloypunto/wearosignal/releases">Releases</a> o compílalo desde el código fuente:</p>
+      <pre><code># Compilar desde fuente
+.\gradlew.bat :app:assembleDebug
+
+# Vincular e instalar en Samsung Galaxy Watch
+adb pair &lt;IP&gt;:&lt;PUERTO_EMPAREJAMIENTO&gt;
+adb connect &lt;IP&gt;:&lt;PUERTO&gt;
+adb install -r --no-streaming wearosignal-v0.0.2-debug.apk</code></pre>
+    </section>
+
+    <section id="privacy">
+      <h2>Política de Privacidad</h2>
+      <p class="section-lead">WearOSignal está construido con privacidad por diseño y cero recolección de datos por parte del desarrollador.</p>
+      <ul>
+        <li><strong>Sin servidores propios ni intermediarios:</strong> la aplicación se comunica exclusivamente con los servidores oficiales de Signal mediante cifrado de extremo a extremo.</li>
+        <li><strong>Sin analíticas ni publicidad:</strong> no incluye Firebase, Crashlytics, rastreadores ni SDKs de terceros.</li>
+        <li><strong>Almacenamiento local:</strong> tus mensajes, claves de sesión y caché multimedia (retención automática de 7 días / 64 MB) residen únicamente en tu reloj y pueden eliminarse por completo desde <em>Ajustes → Desvincular reloj</em>.</li>
+        <li><strong>Permisos mínimos:</strong> <code>RECORD_AUDIO</code> se usa solo al grabar una nota de voz; <code>READ_CONTACTS</code> solo para consultar contactos locales en el directorio privado CDSI de Signal.</li>
+      </ul>
+    </section>
+
+    <section id="license">
+      <h2>Licencia y avisos legales</h2>
+      <p class="section-lead">Software libre publicado bajo <strong>GNU Affero General Public License v3.0 (AGPLv3)</strong>.</p>
+      <div class="notice">
+        <strong>Developed by Cristian Camilo.</strong><br />
+        WearOSignal es un cliente independiente y no oficial para Signal, no afiliado ni respaldado por Signal Messenger, LLC.
+        Todo el código fuente correspondiente está disponible gratuitamente en
+        <a href="https://github.com/soycamiloypunto/wearosignal">github.com/soycamiloypunto/wearosignal</a>
+        bajo los términos de la <a href="https://github.com/soycamiloypunto/wearosignal/blob/main/LICENSE">licencia GNU AGPLv3</a>.
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container">
+      WearOSignal · Developed by Cristian Camilo · GNU AGPLv3 ·
+      <a href="https://github.com/soycamiloypunto/wearosignal">GitHub</a>
+    </div>
+  </footer>
+</body>
+</html>

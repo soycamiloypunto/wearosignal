@@ -22,6 +22,18 @@
     <string name="thread_reply">Responder</string>
     <string name="thread_message_label">Mensaje para %1$s</string>
     <string name="thread_react_label">Reaccionar con un emoji</string>
+    <string name="thread_emoji_label">Enviar un emoji</string>
+    <string name="thread_voice_recording">Grabando…</string>
+    <string name="thread_voice_sending">Enviando nota de voz…</string>
+    <string name="thread_voice_mic_needed">Se requiere permiso de micrófono</string>
+    <string name="thread_audio_play">▶ Audio</string>
+    <string name="thread_audio_stop">⏹ Detener</string>
+    <string name="thread_video_play">▶ Video</string>
+    <string name="thread_emoji_edit_hint">Toca uno para cambiar</string>
+    <string name="thread_emoji_pick_favorite">Elige tu emoji favorito</string>
+    <string name="thread_quick_edit">Editar rápidas</string>
+    <string name="thread_quick_done">Listo</string>
+    <string name="thread_quick_edit_label">Editar respuesta rápida</string>
 
     <!-- Compose -->
     <string name="compose_title">Nuevo mensaje</string>

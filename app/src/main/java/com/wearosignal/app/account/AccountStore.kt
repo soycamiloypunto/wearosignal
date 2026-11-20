@@ -112,7 +112,38 @@ class AccountStore(context: Context) {
     get() = prefs.getBoolean("lockscreen_privacy_enabled", true)
     set(value) = prefs.edit { putBoolean("lockscreen_privacy_enabled", value) }
 
+  /** User-customizable 9 favorite emojis for the quick emoji bar. */
+  var favoriteEmojis: List<String>
+    get() {
+      val saved = prefs.getString("favorite_emojis", null)
+        ?.split("\n")
+        ?.filter { it.isNotBlank() }
+        ?.take(9)
+      return if (saved != null && saved.size == 9) saved else DEFAULT_FAVORITE_EMOJIS
+    }
+    set(value) = prefs.edit {
+      putString("favorite_emojis", value.take(9).joinToString("\n"))
+    }
+
+  /** User-customizable 5 quick replies shown below the composer bar in every chat. */
+  var quickReplies: List<String>
+    get() {
+      val saved = prefs.getString("quick_replies", null)
+        ?.split("\n")
+        ?.filter { it.isNotBlank() }
+        ?.take(5)
+      return if (saved != null && saved.size == 5) saved else DEFAULT_QUICK_REPLIES
+    }
+    set(value) = prefs.edit {
+      putString("quick_replies", value.take(5).joinToString("\n"))
+    }
+
   fun clear() {
     prefs.edit { clear() }
+  }
+
+  companion object {
+    val DEFAULT_FAVORITE_EMOJIS = listOf("👍", "❤️", "😂", "😊", "🙏", "👌", "🔥", "😢", "🎉")
+    val DEFAULT_QUICK_REPLIES = listOf("Ok 👍", "Ya voy", "En un momento", "Gracias", "Te llamo luego")
   }
 }

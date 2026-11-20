@@ -1,12 +1,17 @@
 package com.wearosignal.app.ui
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.graphics.BitmapFactory
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -35,20 +40,26 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
 import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.material.Button
 import androidx.wear.compose.material.ButtonDefaults
 import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.ChipDefaults
+import androidx.wear.compose.material.CircularProgressIndicator
+import androidx.wear.compose.material.Icon
 import androidx.wear.compose.material.MaterialTheme
 import androidx.wear.compose.material.Text
 import com.wearosignal.app.R
 import com.wearosignal.app.messages.MessageRow
 import com.wearosignal.app.messages.attachmentPlaceholder
+import java.io.File
 import java.text.DateFormat
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -70,15 +81,24 @@ fun ThreadScreen(
   title: String,
   isGroup: Boolean,
   messages: List<MessageRow>,
+  favoriteEmojis: List<String>,
+  quickReplies: List<String>,
   polling: Boolean,
   pollProgress: String?,
   pollStatus: String?,
+  sendingVoice: Boolean = false,
   onPoll: () -> Unit,
   onReply: () -> Unit,
+  onSendEmoji: (String) -> Unit,
+  onReplaceFavoriteEmoji: (Int) -> Unit,
+  onSendQuickReply: (String) -> Unit,
+  onEditQuickReply: (Int) -> Unit,
+  onSendVoiceNote: (File) -> Unit,
   onReact: (MessageRow, String) -> Unit,
   onReactCustom: (MessageRow) -> Unit
 ) {
-  // items: title + messages + reply chip; messages load asynchronously,
+  val context = LocalContext.current
+  // items: title + messages + reply bar; messages load asynchronously,
   // so scroll to the latest when they arrive rather than at creation
   val listState = rememberScalingLazyListState()
   LaunchedEffect(messages.size) {
@@ -88,7 +108,33 @@ fun ThreadScreen(
   }
 
   var reactingTo by remember { mutableStateOf<MessageRow?>(null) }
+  var showEmojiPicker by remember { mutableStateOf(false) }
+  var showVoiceRecorder by remember { mutableStateOf(false) }
+  var playingVideoPath by remember { mutableStateOf<String?>(null) }
+  var editingQuickReplies by remember { mutableStateOf(false) }
+  var localError by remember { mutableStateOf<String?>(null) }
   val checkingText = stringResource(R.string.conversations_checking)
+  val sendingVoiceText = stringResource(R.string.thread_voice_sending)
+
+  val micPermissionLauncher = rememberLauncherForActivityResult(
+    ActivityResultContracts.RequestPermission()
+  ) { granted ->
+    if (granted) {
+      localError = null
+      showVoiceRecorder = true
+    } else {
+      localError = context.getString(R.string.thread_voice_mic_needed)
+    }
+  }
+
+  fun startVoiceRecording() {
+    if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+      localError = null
+      showVoiceRecorder = true
+    } else {
+      micPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+    }
+  }
 
   Box(modifier = Modifier.fillMaxSize()) {
     ScalingLazyColumn(state = listState) {
@@ -113,14 +159,17 @@ fun ThreadScreen(
             message = message,
             isGroup = isGroup,
             showSender = firstOfRun,
-            onLongPress = { reactingTo = message }
+            onLongPress = { reactingTo = message },
+            onPlayVideo = { path -> playingVideoPath = path }
           )
         }
       }
 
-      // One status line above the buttons: live progress while checking, else the last failure.
+      // One status line above the buttons: live progress while checking/sending, else the last failure.
       val statusLine = when {
+        sendingVoice -> sendingVoiceText
         polling -> pollProgress ?: checkingText
+        localError != null -> "⚠ $localError"
         pollStatus != null -> "⚠ $pollStatus"
         else -> null
       }
@@ -129,32 +178,119 @@ fun ThreadScreen(
           Text(
             text = statusLine,
             style = MaterialTheme.typography.caption3,
-            color = if (polling) Color(0xFF9E9E9E) else Color(0xFFFFAB91),
+            color = if (polling || sendingVoice) Color(0xFF9E9E9E) else Color(0xFFFFAB91),
             textAlign = TextAlign.Center,
             modifier = Modifier.fillMaxWidth().padding(top = 4.dp)
           )
         }
       }
 
+      // Compact 3-button composer bar: 🎤 Voice Note, 😊 Emoji, Aa Text + ⟳ Refresh
       item {
-        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().padding(top = 4.dp)) {
-          Chip(
-            label = { Text(stringResource(R.string.thread_reply)) },
+        Row(
+          horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally),
+          verticalAlignment = Alignment.CenterVertically,
+          modifier = Modifier.fillMaxWidth().padding(top = 6.dp)
+        ) {
+          Button(
+            onClick = { startVoiceRecording() },
+            enabled = !sendingVoice,
+            colors = ButtonDefaults.primaryButtonColors(),
+            modifier = Modifier.size(ButtonDefaults.SmallButtonSize)
+          ) {
+            Text("🎤", style = MaterialTheme.typography.body1)
+          }
+          Button(
+            onClick = { showEmojiPicker = true },
+            colors = ButtonDefaults.primaryButtonColors(),
+            modifier = Modifier.size(ButtonDefaults.SmallButtonSize)
+          ) {
+            Text("😊", style = MaterialTheme.typography.body1)
+          }
+          Button(
             onClick = onReply,
-            colors = ChipDefaults.primaryChipColors(),
-            modifier = Modifier.weight(1f)
-          )
-          Spacer(modifier = Modifier.width(4.dp))
+            colors = ButtonDefaults.primaryButtonColors(),
+            modifier = Modifier.size(ButtonDefaults.SmallButtonSize)
+          ) {
+            Text("Aa", style = MaterialTheme.typography.button)
+          }
           Button(
             onClick = onPoll,
             enabled = !polling,
             colors = ButtonDefaults.secondaryButtonColors(),
             modifier = Modifier.size(ButtonDefaults.SmallButtonSize)
           ) {
-            Text(if (polling) "…" else "⟳")
+            if (polling) {
+              CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+            } else {
+              Icon(
+                painter = painterResource(R.drawable.ic_refresh),
+                contentDescription = stringResource(R.string.conversations_check),
+                modifier = Modifier.size(18.dp)
+              )
+            }
           }
         }
       }
+
+      // 5 customizable quick replies right below the composer bar (scroll down to tap & send)
+      items(quickReplies.size) { idx ->
+        val replyText = quickReplies[idx]
+        Chip(
+          label = { Text(if (editingQuickReplies) "✎ $replyText" else replyText, maxLines = 1) },
+          onClick = {
+            if (editingQuickReplies) onEditQuickReply(idx) else onSendQuickReply(replyText)
+          },
+          colors = if (editingQuickReplies) ChipDefaults.primaryChipColors() else ChipDefaults.secondaryChipColors(),
+          modifier = Modifier.fillMaxWidth().padding(top = 2.dp)
+        )
+      }
+
+      item {
+        Chip(
+          label = {
+            Text(
+              stringResource(
+                if (editingQuickReplies) R.string.thread_quick_done else R.string.thread_quick_edit
+              )
+            )
+          },
+          onClick = { editingQuickReplies = !editingQuickReplies },
+          colors = ChipDefaults.secondaryChipColors(),
+          modifier = Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 12.dp)
+        )
+      }
+    }
+
+    if (showVoiceRecorder) {
+      VoiceRecorderOverlay(
+        onSend = { file ->
+          showVoiceRecorder = false
+          onSendVoiceNote(file)
+        },
+        onCancel = { showVoiceRecorder = false }
+      )
+    }
+
+    if (showEmojiPicker) {
+      QuickEmojiOverlay(
+        favorites = favoriteEmojis,
+        onPick = { emoji ->
+          showEmojiPicker = false
+          onSendEmoji(emoji)
+        },
+        onReplaceFavorite = { slotIndex ->
+          onReplaceFavoriteEmoji(slotIndex)
+        },
+        onDismiss = { showEmojiPicker = false }
+      )
+    }
+
+    playingVideoPath?.let { path ->
+      VideoPlayerOverlay(
+        path = path,
+        onDismiss = { playingVideoPath = null }
+      )
     }
 
     reactingTo?.let { message ->
@@ -263,11 +399,44 @@ private fun ReceiptCircles(delivered: Boolean, read: Boolean, color: Color, knoc
   }
 }
 
-/** The image when downloaded, otherwise a placeholder ("📷 Photo…" until the next poll fetches it). */
+/** The image, animated GIF/sticker, audio pill, or video pill when downloaded, else a placeholder. */
 @Composable
-private fun AttachmentContent(message: MessageRow, contentColor: Color, modifier: Modifier) {
+private fun AttachmentContent(
+  message: MessageRow,
+  contentColor: Color,
+  onPlayVideo: (String) -> Unit,
+  modifier: Modifier
+) {
   val path = message.attachmentPath
-  val bitmap = remember(path) { path?.let { BitmapFactory.decodeFile(it)?.asImageBitmap() } }
+  val isAudio = message.attachmentType?.startsWith("audio/") == true
+  val isVideo = message.attachmentType?.startsWith("video/") == true
+  val isImage = message.attachmentType?.startsWith("image/") == true
+  val isAnimated = path != null && (path.endsWith(".gif", ignoreCase = true) || path.endsWith(".webp", ignoreCase = true))
+
+  if (isAudio && path != null && File(path).exists()) {
+    AudioPlayPill(path = path, contentColor = contentColor, modifier = modifier)
+    return
+  }
+
+  if (isVideo && path != null && File(path).exists()) {
+    VideoPlayPill(contentColor = contentColor, onPlay = { onPlayVideo(path) }, modifier = modifier)
+    return
+  }
+
+  if (isAnimated && File(path!!).exists()) {
+    AnimatedMediaView(
+      path = path,
+      modifier = modifier
+        .padding(bottom = if (message.body.isNotEmpty()) 3.dp else 0.dp)
+        .fillMaxWidth()
+        .clip(RoundedCornerShape(10.dp))
+    )
+    return
+  }
+
+  val bitmap = remember(path, isImage) {
+    if (isImage && path != null) BitmapFactory.decodeFile(path)?.asImageBitmap() else null
+  }
 
   if (bitmap != null) {
     Image(
@@ -281,7 +450,7 @@ private fun AttachmentContent(message: MessageRow, contentColor: Color, modifier
     )
   } else {
     Text(
-      text = attachmentPlaceholder(message.attachmentType) + if (message.attachmentType?.startsWith("image/") == true) "…" else "",
+      text = attachmentPlaceholder(message.attachmentType) + if (isImage || isAudio || isVideo) "…" else "",
       style = MaterialTheme.typography.body2,
       color = contentColor.copy(alpha = 0.7f),
       modifier = modifier
@@ -309,7 +478,13 @@ private fun DayDivider(at: Long) {
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun MessageBubble(message: MessageRow, isGroup: Boolean, showSender: Boolean, onLongPress: () -> Unit) {
+private fun MessageBubble(
+  message: MessageRow,
+  isGroup: Boolean,
+  showSender: Boolean,
+  onLongPress: () -> Unit,
+  onPlayVideo: (String) -> Unit
+) {
   val fromSelf = message.fromSelf
   val bubbleShape = if (fromSelf) {
     RoundedCornerShape(14.dp, 14.dp, 4.dp, 14.dp)
@@ -351,7 +526,12 @@ private fun MessageBubble(message: MessageRow, isGroup: Boolean, showSender: Boo
         ) {
           val contentColor = if (fromSelf) MaterialTheme.colors.onPrimary else Color.White
           if (message.attachmentType != null) {
-            AttachmentContent(message, contentColor, modifier = Modifier.align(Alignment.Start))
+            AttachmentContent(
+              message = message,
+              contentColor = contentColor,
+              onPlayVideo = onPlayVideo,
+              modifier = Modifier.align(Alignment.Start)
+            )
           }
           if (message.body.isNotEmpty()) {
             Text(

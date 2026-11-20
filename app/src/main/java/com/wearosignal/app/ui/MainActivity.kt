@@ -108,6 +108,12 @@ fun WearSignalNavHost() {
     composable("conversations") {
       var limit by remember { mutableIntStateOf(10) }
       var conversations by remember { mutableStateOf(listOf<ConversationRow>()) }
+      // Auto-sync silently once when opening the home screen so active chats stay fresh.
+      LaunchedEffect(Unit) {
+        if (AppDeps.account.isLinked && !polling) {
+          pollNow()
+        }
+      }
       LaunchedEffect(pollCount, limit) {
         // one extra row tells us whether "Load more" has anything to load
         conversations = withContext(Dispatchers.IO) { AppDeps.messages.conversations(limit + 1) }
@@ -153,7 +159,32 @@ fun WearSignalNavHost() {
           }
         }
       }
+      var sendingVoice by remember { mutableStateOf(false) }
+      var favoriteEmojis by remember { mutableStateOf(AppDeps.account.favoriteEmojis) }
+      var quickReplies by remember { mutableStateOf(AppDeps.account.quickReplies) }
       val send = rememberSendLauncher(onSent = { refreshKey++ })
+      val sendDirectText: (String) -> Unit = { text ->
+        scope.launch {
+          withContext(Dispatchers.IO) { MessageSender.send(conversation.peer, conversation.isGroup, text) }
+          refreshKey++
+        }
+      }
+      val replaceFavoriteEmoji = rememberFavoriteEmojiLauncher { slotIndex, emoji ->
+        val updated = favoriteEmojis.toMutableList()
+        if (slotIndex in updated.indices) {
+          updated[slotIndex] = emoji
+          favoriteEmojis = updated
+          AppDeps.account.favoriteEmojis = updated
+        }
+      }
+      val editQuickReply = rememberQuickReplyEditorLauncher { slotIndex, text ->
+        val updated = quickReplies.toMutableList()
+        if (slotIndex in updated.indices) {
+          updated[slotIndex] = text
+          quickReplies = updated
+          AppDeps.account.quickReplies = updated
+        }
+      }
       fun react(message: MessageRow, emoji: String) {
         scope.launch {
           withContext(Dispatchers.IO) {
@@ -176,11 +207,33 @@ fun WearSignalNavHost() {
         title = conversation.title,
         isGroup = conversation.isGroup,
         messages = messages,
+        favoriteEmojis = favoriteEmojis,
+        quickReplies = quickReplies,
         polling = polling,
         pollProgress = pollProgress,
         pollStatus = pollStatus,
+        sendingVoice = sendingVoice,
         onPoll = { pollNow() },
         onReply = { send(conversation.peer, conversation.isGroup, conversation.title) },
+        onSendEmoji = sendDirectText,
+        onReplaceFavoriteEmoji = replaceFavoriteEmoji,
+        onSendQuickReply = sendDirectText,
+        onEditQuickReply = editQuickReply,
+        onSendVoiceNote = { file ->
+          sendingVoice = true
+          scope.launch {
+            val result = withContext(Dispatchers.IO) {
+              try {
+                MessageSender.sendVoiceNote(conversation.peer, conversation.isGroup, file)
+              } finally {
+                file.delete()
+              }
+            }
+            sendingVoice = false
+            pollStatus = if (result is MessageSender.Result.Failure) result.message else null
+            refreshKey++
+          }
+        },
         onReact = ::react,
         onReactCustom = pickEmoji
       )
@@ -282,6 +335,66 @@ private fun firstEmoji(text: String): String? {
   if (end == android.icu.text.BreakIterator.DONE) return null
   val grapheme = trimmed.substring(0, end)
   return grapheme.takeIf { g -> g.any { it.code > 0x2000 } }
+}
+
+@Composable
+fun rememberFavoriteEmojiLauncher(onPicked: (slotIndex: Int, emoji: String) -> Unit): (Int) -> Unit {
+  val context = LocalContext.current
+  val pendingSlot = remember { mutableStateOf<Int?>(null) }
+  val launcher = androidx.activity.compose.rememberLauncherForActivityResult(
+    ActivityResultContracts.StartActivityForResult()
+  ) { result ->
+    val slot = pendingSlot.value
+    pendingSlot.value = null
+    val text = result.data
+      ?.let { android.app.RemoteInput.getResultsFromIntent(it) }
+      ?.getCharSequence(REACTION_INPUT_KEY)
+      ?.toString()
+    val emoji = text?.let { firstEmoji(it) } ?: text?.trim()?.takeIf { it.isNotEmpty() }
+    if (result.resultCode == android.app.Activity.RESULT_OK && slot != null && emoji != null) {
+      onPicked(slot, emoji)
+    }
+  }
+
+  return { slotIndex ->
+    pendingSlot.value = slotIndex
+    val remoteInput = android.app.RemoteInput.Builder(REACTION_INPUT_KEY)
+      .setLabel(context.getString(R.string.thread_emoji_pick_favorite))
+      .build()
+    val intent = RemoteInputIntentHelper.createActionRemoteInputIntent()
+    RemoteInputIntentHelper.putRemoteInputsExtra(intent, listOf(remoteInput))
+    launcher.launch(intent)
+  }
+}
+
+@Composable
+fun rememberQuickReplyEditorLauncher(onEdited: (slotIndex: Int, text: String) -> Unit): (Int) -> Unit {
+  val context = LocalContext.current
+  val pendingSlot = remember { mutableStateOf<Int?>(null) }
+  val launcher = androidx.activity.compose.rememberLauncherForActivityResult(
+    ActivityResultContracts.StartActivityForResult()
+  ) { result ->
+    val slot = pendingSlot.value
+    pendingSlot.value = null
+    val text = result.data
+      ?.let { android.app.RemoteInput.getResultsFromIntent(it) }
+      ?.getCharSequence(REPLY_INPUT_KEY)
+      ?.toString()
+      ?.trim()
+    if (result.resultCode == android.app.Activity.RESULT_OK && slot != null && !text.isNullOrEmpty()) {
+      onEdited(slot, text)
+    }
+  }
+
+  return { slotIndex ->
+    pendingSlot.value = slotIndex
+    val remoteInput = android.app.RemoteInput.Builder(REPLY_INPUT_KEY)
+      .setLabel(context.getString(R.string.thread_quick_edit_label))
+      .build()
+    val intent = RemoteInputIntentHelper.createActionRemoteInputIntent()
+    RemoteInputIntentHelper.putRemoteInputsExtra(intent, listOf(remoteInput))
+    launcher.launch(intent)
+  }
 }
 
 private const val REPLY_INPUT_KEY = "reply_text"

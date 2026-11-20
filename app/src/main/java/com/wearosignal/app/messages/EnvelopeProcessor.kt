@@ -127,10 +127,12 @@ class EnvelopeProcessor(private val messages: MessagesRepository) {
         return null
       }
       val body = data.body
-      val attachment = data.attachments.firstOrNull()
+      val stickerPointer = data.sticker?.data_
+      val attachment = data.attachments.firstOrNull() ?: stickerPointer
       if (body.isNullOrEmpty() && attachment == null) {
         return null
       }
+      val attachmentType = attachment?.contentType ?: if (stickerPointer != null) "image/webp" else null
       val groupId = data.groupV2?.let { recordGroup(it.masterKey!!.toByteArray(), it.revision ?: 0) }
       return IncomingMessage(
         peer = groupId ?: sourceServiceId.toString(),
@@ -139,7 +141,7 @@ class EnvelopeProcessor(private val messages: MessagesRepository) {
         body = body.orEmpty(),
         sentAt = data.timestamp ?: envelope.clientTimestamp ?: serverDeliveredTimestamp,
         fromSelf = false,
-        attachmentType = attachment?.contentType,
+        attachmentType = attachmentType,
         attachmentPointer = attachment?.encode()
       )
     }
@@ -165,10 +167,12 @@ class EnvelopeProcessor(private val messages: MessagesRepository) {
         return null
       }
       val body = data.body
-      val attachment = data.attachments.firstOrNull()
+      val stickerPointer = data.sticker?.data_
+      val attachment = data.attachments.firstOrNull() ?: stickerPointer
       if (body.isNullOrEmpty() && attachment == null) {
         return null
       }
+      val attachmentType = attachment?.contentType ?: if (stickerPointer != null) "image/webp" else null
       val groupId = data.groupV2?.let { recordGroup(it.masterKey!!.toByteArray(), it.revision ?: 0) }
       // Newer clients set only the binary field; older ones only the string. Accept either.
       val destination = ServiceId.parseOrNull(sent.destinationServiceId, sent.destinationServiceIdBinary)?.toString()
@@ -184,7 +188,7 @@ class EnvelopeProcessor(private val messages: MessagesRepository) {
         body = body.orEmpty(),
         sentAt = sent.timestamp ?: serverDeliveredTimestamp,
         fromSelf = true,
-        attachmentType = attachment?.contentType,
+        attachmentType = attachmentType,
         attachmentPointer = attachment?.encode()
       )
     }

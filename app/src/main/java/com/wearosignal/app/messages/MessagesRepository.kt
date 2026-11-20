@@ -40,9 +40,13 @@ data class MessageReaction(val emoji: String, val count: Int, val mine: Boolean)
 /** An incoming message newly marked seen: its author and sent timestamp (Signal's message key). */
 data class SeenMessage(val senderAci: String, val sentAt: Long)
 
-/** Placeholder body text for attachment messages ("📷 Photo" / "📎 Attachment"). */
-fun attachmentPlaceholder(contentType: String?): String =
-  if (contentType?.startsWith("image/") == true) "📷 Photo" else "📎 Attachment"
+/** Placeholder body text for attachment messages ("📷 Photo" / "🎤 Audio" / "🎬 Video" / "📎 Attachment"). */
+fun attachmentPlaceholder(contentType: String?): String = when {
+  contentType?.startsWith("image/") == true -> "📷 Photo"
+  contentType?.startsWith("audio/") == true -> "🎤 Audio"
+  contentType?.startsWith("video/") == true -> "🎬 Video"
+  else -> "📎 Attachment"
+}
 
 /**
  * Stores and reads decrypted messages, grouped into conversations by peer
@@ -64,7 +68,8 @@ class MessagesRepository(private val db: WatchDatabase) {
     serverAt: Long,
     fromSelf: Boolean,
     attachmentType: String? = null,
-    attachmentPointer: ByteArray? = null
+    attachmentPointer: ByteArray? = null,
+    attachmentPath: String? = null
   ): Boolean {
     // Signal identifies a message by (sender, sent timestamp). An envelope the server
     // redelivers because its ack was lost (e.g. the connection dropped mid-drain) must
@@ -86,6 +91,7 @@ class MessagesRepository(private val db: WatchDatabase) {
       put("from_self", if (fromSelf) 1 else 0)
       put("attachment_type", attachmentType)
       put("attachment_pointer", attachmentPointer)
+      put("attachment_path", attachmentPath)
     }
     db.writableDatabase.insert("messages", null, values)
     db.writableDatabase.execSQL(

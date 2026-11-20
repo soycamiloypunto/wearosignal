@@ -5,10 +5,16 @@ import org.signal.core.models.ServiceId
 import org.signal.core.models.ServiceId.ACI
 import org.signal.core.util.logging.Log
 import org.signal.libsignal.zkgroup.groups.GroupMasterKey
+import org.signal.network.NetworkResult
+import org.signal.network.websocket.WebSocketRequestMessage
+import org.signal.network.websocket.get
 import org.whispersystems.signalservice.api.SignalServiceMessageSender.IndividualSendEvents
 import org.whispersystems.signalservice.api.SignalServiceMessageSender.LegacyGroupEvents
+import org.whispersystems.signalservice.api.crypto.AttachmentCipherStreamUtil
 import org.whispersystems.signalservice.api.crypto.ContentHint
 import org.whispersystems.signalservice.api.crypto.SealedSenderAccess
+import org.whispersystems.signalservice.api.fromWebSocketRequest
+import org.whispersystems.signalservice.api.messages.SignalServiceAttachment
 import org.whispersystems.signalservice.api.messages.SignalServiceDataMessage
 import org.whispersystems.signalservice.api.messages.SignalServiceGroupV2
 import org.whispersystems.signalservice.api.messages.SignalServiceReceiptMessage
@@ -16,6 +22,9 @@ import org.whispersystems.signalservice.api.messages.multidevice.ReadMessage
 import org.whispersystems.signalservice.api.messages.multidevice.SentTranscriptMessage
 import org.whispersystems.signalservice.api.messages.multidevice.SignalServiceSyncMessage
 import org.whispersystems.signalservice.api.push.SignalServiceAddress
+import org.whispersystems.signalservice.internal.push.AttachmentUploadForm
+import org.whispersystems.signalservice.internal.crypto.PaddingInputStream
+import java.io.File
 import java.util.Optional
 
 /**
@@ -36,6 +45,129 @@ object MessageSender {
   /** Sends to [peer]: a group id (when [isGroup]) or a ServiceId string. */
   fun send(peer: String, isGroup: Boolean, body: String): Result {
     return if (isGroup) sendToGroup(peer, body) else sendText(peer, body)
+  }
+
+  /**
+   * Uploads [audioFile] (AAC/M4A) to Signal CDN as a voice note, sends it to [peer] (1:1 or group),
+   * emits a sync transcript to our other devices, and records a playable local copy.
+   */
+  fun sendVoiceNote(peer: String, isGroup: Boolean, audioFile: File): Result {
+    if (!AppDeps.account.isLinked) return Result.Failure("Not linked")
+    if (!audioFile.exists() || audioFile.length() == 0L) return Result.Failure("Empty recording")
+
+    val now = System.currentTimeMillis()
+    val webSocket = AppDeps.net.authWebSocket
+    return try {
+      webSocket.connect()
+      val paddedLength = PaddingInputStream.getPaddedSize(audioFile.length())
+      val ciphertextLength = AttachmentCipherStreamUtil.getCiphertextLength(paddedLength)
+      val formRequest = WebSocketRequestMessage.get("/v4/attachments/form/upload?uploadLength=$ciphertextLength")
+      val uploadForm = NetworkResult.fromWebSocketRequest(webSocket, formRequest, AttachmentUploadForm::class)
+        .successOrThrow()
+      val uploadSpec = AppDeps.net.authPushServiceSocket.getResumableUploadSpec(uploadForm)
+      val pointer = audioFile.inputStream().use { stream ->
+        val attachmentStream = SignalServiceAttachment.newStreamBuilder()
+          .withStream(stream)
+          .withContentType("audio/aac")
+          .withLength(audioFile.length())
+          .withVoiceNote(true)
+          .withUploadTimestamp(now)
+          .withResumableUploadSpec(uploadSpec)
+          .build()
+        AppDeps.net.messageSender.uploadAttachment(attachmentStream)
+      }
+
+      if (isGroup) {
+        val (masterKeyBytes, revision) = AppDeps.database.readableDatabase.rawQuery(
+          "SELECT master_key, revision FROM groups WHERE group_id = ?",
+          arrayOf(peer)
+        ).use { cursor ->
+          if (!cursor.moveToFirst()) return Result.Failure("Unknown group")
+          cursor.getBlob(0) to cursor.getInt(1)
+        }
+        val memberAcis = GroupStateResolver.cachedMembers(peer)
+          ?: return Result.Failure("Group members not fetched yet — poll first")
+        val recipients = memberAcis.mapNotNull { ServiceId.parseOrNull(it) }
+        if (recipients.isEmpty()) return Result.Failure("No other members")
+
+        val groupContext = SignalServiceGroupV2.newBuilder(GroupMasterKey(masterKeyBytes))
+          .withRevision(revision)
+          .build()
+        val message = SignalServiceDataMessage.Builder()
+          .withTimestamp(now)
+          .withAttachments(listOf(pointer))
+          .asGroupMessage(groupContext)
+          .build()
+
+        val addresses = recipients.map { SignalServiceAddress(it) }
+        val results = AppDeps.net.messageSender.sendDataMessage(
+          addresses,
+          addresses.map { null as SealedSenderAccess? },
+          false,
+          ContentHint.RESENDABLE,
+          message,
+          LegacyGroupEvents.EMPTY,
+          null,
+          null,
+          true
+        )
+        if (results.any { it.isSuccess }) {
+          sendSyncTranscript(message, Optional.empty(), recipients.toSet())
+          val localCopy = AppDeps.attachments.saveLocalAudio(audioFile, now)
+          storeOwnAudio(peer = peer, groupId = peer, audioPath = localCopy.path, sentAt = now)
+          Log.i(TAG, "Group voice note sent")
+          Result.Success
+        } else {
+          Result.Failure("Could not deliver")
+        }
+      } else {
+        val serviceId = ServiceId.parseOrNull(peer) ?: return Result.Failure("Bad recipient")
+        val address = SignalServiceAddress(serviceId)
+        val message = SignalServiceDataMessage.Builder()
+          .withTimestamp(now)
+          .withAttachments(listOf(pointer))
+          .build()
+
+        val result = AppDeps.net.messageSender.sendDataMessage(
+          address,
+          null,
+          ContentHint.RESENDABLE,
+          message,
+          IndividualSendEvents.EMPTY,
+          true,
+          false
+        )
+        if (result.isSuccess) {
+          sendSyncTranscript(message, Optional.of(address), setOf(serviceId))
+          val localCopy = AppDeps.attachments.saveLocalAudio(audioFile, now)
+          storeOwnAudio(peer = peer, groupId = null, audioPath = localCopy.path, sentAt = now)
+          Log.i(TAG, "Voice note sent to ${peer.take(12)}")
+          Result.Success
+        } else {
+          Result.Failure("Could not deliver")
+        }
+      }
+    } catch (t: Throwable) {
+      Log.w(TAG, "Voice note send failed", t)
+      Result.Failure(t.message ?: "Send failed")
+    } finally {
+      webSocket.disconnect()
+    }
+  }
+
+  private fun storeOwnAudio(peer: String, groupId: String?, audioPath: String, sentAt: Long) {
+    val selfAci = AppDeps.account.aci?.toString()
+    AppDeps.messages.insert(
+      peer = peer,
+      senderAci = selfAci ?: peer,
+      groupId = groupId,
+      body = "",
+      sentAt = sentAt,
+      serverAt = sentAt,
+      fromSelf = true,
+      attachmentType = "audio/aac",
+      attachmentPath = audioPath
+    )
   }
 
   /**

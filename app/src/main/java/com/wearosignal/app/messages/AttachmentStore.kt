@@ -41,24 +41,24 @@ class AttachmentStore(context: Context) {
 
     // Expire pointers we'll never download: too old, or a type we don't render.
     db.execSQL(
-      "UPDATE messages SET attachment_pointer = NULL WHERE attachment_pointer IS NOT NULL AND (sent_at < ? OR attachment_type IS NULL OR attachment_type NOT LIKE 'image/%')",
+      "UPDATE messages SET attachment_pointer = NULL WHERE attachment_pointer IS NOT NULL AND (sent_at < ? OR attachment_type IS NULL OR (attachment_type NOT LIKE 'image/%' AND attachment_type NOT LIKE 'audio/%' AND attachment_type NOT LIKE 'video/%'))",
       arrayOf(cutoff)
     )
 
-    val pending = mutableListOf<Pair<Long, ByteArray>>()
+    val pending = mutableListOf<Triple<Long, String, ByteArray>>()
     db.rawQuery(
-      "SELECT _id, attachment_pointer FROM messages WHERE attachment_pointer IS NOT NULL AND attachment_path IS NULL ORDER BY sent_at DESC LIMIT $MAX_DOWNLOADS_PER_RUN",
+      "SELECT _id, attachment_type, attachment_pointer FROM messages WHERE attachment_pointer IS NOT NULL AND attachment_path IS NULL ORDER BY sent_at DESC LIMIT $MAX_DOWNLOADS_PER_RUN",
       emptyArray()
     ).use { cursor ->
       while (cursor.moveToNext()) {
-        pending += cursor.getLong(0) to cursor.getBlob(1)
+        pending += Triple(cursor.getLong(0), cursor.getString(1) ?: "", cursor.getBlob(2))
       }
     }
 
-    pending.forEachIndexed { index, (messageId, pointerBytes) ->
+    pending.forEachIndexed { index, (messageId, mimeType, pointerBytes) ->
       onProgress(index + 1, pending.size)
       try {
-        download(messageId, pointerBytes)
+        download(messageId, mimeType, pointerBytes)
       } catch (t: Throwable) {
         Log.w(TAG, "Attachment download for message $messageId failed; will retry next poll", t)
       }
@@ -67,7 +67,14 @@ class AttachmentStore(context: Context) {
     cleanup()
   }
 
-  private fun download(messageId: Long, pointerBytes: ByteArray) {
+  /** Copies a locally recorded voice note into the managed attachments directory. */
+  fun saveLocalAudio(source: File, timestamp: Long): File {
+    val target = File(dir, "att_sent_$timestamp.m4a")
+    source.copyTo(target, overwrite = true)
+    return target
+  }
+
+  private fun download(messageId: Long, mimeType: String, pointerBytes: ByteArray) {
     val pointer = AttachmentPointerUtil.createSignalAttachmentPointer(pointerBytes)
     val digest = pointer.digest.orElse(null)
     if (digest == null) {
@@ -87,22 +94,45 @@ class AttachmentStore(context: Context) {
       )
       stream.use { input -> decrypted.outputStream().use { input.copyTo(it) } }
 
-      val bitmap = decodeDownscaled(decrypted)
-      if (bitmap == null) {
-        Log.w(TAG, "Attachment for message $messageId did not decode as an image; dropping")
-        clearPointer(messageId)
-        return
+      val file = when {
+        mimeType.startsWith("audio/") -> {
+          val ext = when {
+            mimeType.contains("ogg") -> "ogg"
+            mimeType.contains("mpeg") || mimeType.contains("mp3") -> "mp3"
+            else -> "m4a"
+          }
+          File(dir, "att_$messageId.$ext").also { decrypted.copyTo(it, overwrite = true) }
+        }
+        mimeType.startsWith("video/") -> {
+          File(dir, "att_$messageId.mp4").also { decrypted.copyTo(it, overwrite = true) }
+        }
+        mimeType == "image/gif" -> {
+          // Keep original GIF bytes so AnimatedImageDrawable plays the animation.
+          File(dir, "att_$messageId.gif").also { decrypted.copyTo(it, overwrite = true) }
+        }
+        mimeType == "image/webp" -> {
+          // Keep original WebP bytes so stickers (including animated WebP) preserve transparency & animation.
+          File(dir, "att_$messageId.webp").also { decrypted.copyTo(it, overwrite = true) }
+        }
+        else -> {
+          val bitmap = decodeDownscaled(decrypted)
+          if (bitmap == null) {
+            Log.w(TAG, "Attachment for message $messageId did not decode as an image; dropping")
+            clearPointer(messageId)
+            return
+          }
+          File(dir, "att_$messageId.jpg").also { outFile ->
+            outFile.outputStream().use { out -> bitmap.compress(Bitmap.CompressFormat.JPEG, 80, out) }
+            bitmap.recycle()
+          }
+        }
       }
-
-      val file = File(dir, "att_$messageId.jpg")
-      file.outputStream().use { out -> bitmap.compress(Bitmap.CompressFormat.JPEG, 80, out) }
-      bitmap.recycle()
 
       AppDeps.database.writableDatabase.execSQL(
         "UPDATE messages SET attachment_path = ?, attachment_pointer = NULL WHERE _id = ?",
         arrayOf(file.path, messageId)
       )
-      Log.i(TAG, "Downloaded attachment for message $messageId (${file.length() / 1024} KB)")
+      Log.i(TAG, "Downloaded attachment ($mimeType) for message $messageId (${file.length() / 1024} KB)")
     } finally {
       encrypted.delete()
       decrypted.delete()
