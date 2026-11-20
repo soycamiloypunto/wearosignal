@@ -6,3 +6,6 @@ local.properties
 .kotlin/
 captures/
 keystore/
+docs/releases/
+*.apk
+*.aab
