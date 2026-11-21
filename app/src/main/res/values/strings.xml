@@ -66,6 +66,9 @@
     <string name="status_phone_auto">Phone: auto</string>
     <string name="status_phone_connected">Phone: connected</string>
     <string name="status_phone_away">Phone: away</string>
+    <string name="status_notifications">Notifications</string>
+    <string name="status_read_receipts">Read receipts</string>
+    <string name="status_lockscreen">Private lock</string>
     <string name="status_unlink">Unlink watch</string>
     <string name="status_unlink_confirm">Tap again to unlink</string>
     <string name="status_unlink_desc">Clears local chats &amp; keys</string>

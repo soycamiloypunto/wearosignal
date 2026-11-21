@@ -66,6 +66,9 @@
     <string name="status_phone_auto">Teléfono: auto</string>
     <string name="status_phone_connected">Teléfono: conectado</string>
     <string name="status_phone_away">Teléfono: desconectado</string>
+    <string name="status_notifications">Notificaciones</string>
+    <string name="status_read_receipts">Confirm. lectura</string>
+    <string name="status_lockscreen">Bloqueo privado</string>
     <string name="status_unlink">Desvincular reloj</string>
     <string name="status_unlink_confirm">Toca otra vez para confirmar</string>
     <string name="status_unlink_desc">Borra chats y claves locales</string>
