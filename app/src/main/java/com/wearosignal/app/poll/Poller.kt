@@ -84,6 +84,9 @@ object Poller {
       _progress.value = "Images $done of $total"
     }
 
+    // Purge any disappearing messages whose expiration time has passed.
+    AppDeps.messages.purgeExpired()
+
     if (!silent) {
       AppDeps.notifier.notify(newMessages) { aci -> resolveName(aci) }
     }

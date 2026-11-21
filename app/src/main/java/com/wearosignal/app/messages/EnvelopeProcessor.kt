@@ -56,7 +56,11 @@ class EnvelopeProcessor(private val messages: MessagesRepository) {
     /** Content type of the first attachment, if any (downloaded later when it's an image). */
     val attachmentType: String? = null,
     /** Serialized AttachmentPointer proto for the first attachment. */
-    val attachmentPointer: ByteArray? = null
+    val attachmentPointer: ByteArray? = null,
+    /** Disappearing message timer in seconds (0 = off). */
+    val expireTimerSeconds: Int = 0,
+    /** Epoch ms when this message expires (0 = never). */
+    val expiresAt: Long = 0L
   )
 
   fun process(envelope: Envelope, serverDeliveredTimestamp: Long): IncomingMessage? {
@@ -126,6 +130,10 @@ class EnvelopeProcessor(private val messages: MessagesRepository) {
         applyReaction(reaction, peer = groupId ?: sourceServiceId.toString(), reacterAci = sourceServiceId.toString())
         return null
       }
+      val groupId = data.groupV2?.let { recordGroup(it.masterKey!!.toByteArray(), it.revision ?: 0) }
+      val peer = groupId ?: sourceServiceId.toString()
+      val expireTimer = (data.expireTimer ?: 0).coerceAtLeast(0)
+      messages.setPeerExpireTimer(peer, expireTimer)
       val body = data.body
       val stickerPointer = data.sticker?.data_
       val attachment = data.attachments.firstOrNull() ?: stickerPointer
@@ -133,16 +141,19 @@ class EnvelopeProcessor(private val messages: MessagesRepository) {
         return null
       }
       val attachmentType = attachment?.contentType ?: if (stickerPointer != null) "image/webp" else null
-      val groupId = data.groupV2?.let { recordGroup(it.masterKey!!.toByteArray(), it.revision ?: 0) }
+      val sentAt = data.timestamp ?: envelope.clientTimestamp ?: serverDeliveredTimestamp
+      val expiresAt = if (expireTimer > 0) sentAt + expireTimer * 1000L else 0L
       return IncomingMessage(
-        peer = groupId ?: sourceServiceId.toString(),
+        peer = peer,
         senderAci = sourceServiceId.toString(),
         groupId = groupId,
         body = body.orEmpty(),
-        sentAt = data.timestamp ?: envelope.clientTimestamp ?: serverDeliveredTimestamp,
+        sentAt = sentAt,
         fromSelf = false,
         attachmentType = attachmentType,
-        attachmentPointer = attachment?.encode()
+        attachmentPointer = attachment?.encode(),
+        expireTimerSeconds = expireTimer,
+        expiresAt = expiresAt
       )
     }
 
@@ -166,13 +177,6 @@ class EnvelopeProcessor(private val messages: MessagesRepository) {
         applyReaction(reaction, peer = peer, reacterAci = selfAci.toString())
         return null
       }
-      val body = data.body
-      val stickerPointer = data.sticker?.data_
-      val attachment = data.attachments.firstOrNull() ?: stickerPointer
-      if (body.isNullOrEmpty() && attachment == null) {
-        return null
-      }
-      val attachmentType = attachment?.contentType ?: if (stickerPointer != null) "image/webp" else null
       val groupId = data.groupV2?.let { recordGroup(it.masterKey!!.toByteArray(), it.revision ?: 0) }
       // Newer clients set only the binary field; older ones only the string. Accept either.
       val destination = ServiceId.parseOrNull(sent.destinationServiceId, sent.destinationServiceIdBinary)?.toString()
@@ -181,15 +185,29 @@ class EnvelopeProcessor(private val messages: MessagesRepository) {
         Log.w(TAG, "Sent transcript with no group or destination; dropping")
         return null
       }
+      val expireTimer = (data.expireTimer ?: 0).coerceAtLeast(0)
+      messages.setPeerExpireTimer(peer, expireTimer)
+      val body = data.body
+      val stickerPointer = data.sticker?.data_
+      val attachment = data.attachments.firstOrNull() ?: stickerPointer
+      if (body.isNullOrEmpty() && attachment == null) {
+        return null
+      }
+      val attachmentType = attachment?.contentType ?: if (stickerPointer != null) "image/webp" else null
+      val sentAt = sent.timestamp ?: serverDeliveredTimestamp
+      val startAt = sent.expirationStartTimestamp?.takeIf { it > 0L } ?: sentAt
+      val expiresAt = if (expireTimer > 0) startAt + expireTimer * 1000L else 0L
       return IncomingMessage(
         peer = peer,
         senderAci = selfAci.toString(),
         groupId = groupId,
         body = body.orEmpty(),
-        sentAt = sent.timestamp ?: serverDeliveredTimestamp,
+        sentAt = sentAt,
         fromSelf = true,
         attachmentType = attachmentType,
-        attachmentPointer = attachment?.encode()
+        attachmentPointer = attachment?.encode(),
+        expireTimerSeconds = expireTimer,
+        expiresAt = expiresAt
       )
     }
 
@@ -207,7 +225,9 @@ class EnvelopeProcessor(private val messages: MessagesRepository) {
       serverAt = System.currentTimeMillis(),
       fromSelf = message.fromSelf,
       attachmentType = message.attachmentType,
-      attachmentPointer = message.attachmentPointer
+      attachmentPointer = message.attachmentPointer,
+      expireTimerSeconds = message.expireTimerSeconds,
+      expiresAt = message.expiresAt
     )
   }
 

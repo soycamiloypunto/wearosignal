@@ -77,6 +77,7 @@ object MessageSender {
         AppDeps.net.messageSender.uploadAttachment(attachmentStream)
       }
 
+      val expireTimer = AppDeps.messages.getPeerExpireTimer(peer)
       if (isGroup) {
         val (masterKeyBytes, revision) = AppDeps.database.readableDatabase.rawQuery(
           "SELECT master_key, revision FROM groups WHERE group_id = ?",
@@ -96,6 +97,7 @@ object MessageSender {
         val message = SignalServiceDataMessage.Builder()
           .withTimestamp(now)
           .withAttachments(listOf(pointer))
+          .withExpiration(expireTimer)
           .asGroupMessage(groupContext)
           .build()
 
@@ -112,9 +114,9 @@ object MessageSender {
           true
         )
         if (results.any { it.isSuccess }) {
-          sendSyncTranscript(message, Optional.empty(), recipients.toSet())
+          sendSyncTranscript(message, Optional.empty(), recipients.toSet(), if (expireTimer > 0) now else 0L)
           val localCopy = AppDeps.attachments.saveLocalAudio(audioFile, now)
-          storeOwnAudio(peer = peer, groupId = peer, audioPath = localCopy.path, sentAt = now)
+          storeOwnAudio(peer = peer, groupId = peer, audioPath = localCopy.path, sentAt = now, expireTimer = expireTimer)
           Log.i(TAG, "Group voice note sent")
           Result.Success
         } else {
@@ -126,6 +128,7 @@ object MessageSender {
         val message = SignalServiceDataMessage.Builder()
           .withTimestamp(now)
           .withAttachments(listOf(pointer))
+          .withExpiration(expireTimer)
           .build()
 
         val result = AppDeps.net.messageSender.sendDataMessage(
@@ -138,9 +141,9 @@ object MessageSender {
           false
         )
         if (result.isSuccess) {
-          sendSyncTranscript(message, Optional.of(address), setOf(serviceId))
+          sendSyncTranscript(message, Optional.of(address), setOf(serviceId), if (expireTimer > 0) now else 0L)
           val localCopy = AppDeps.attachments.saveLocalAudio(audioFile, now)
-          storeOwnAudio(peer = peer, groupId = null, audioPath = localCopy.path, sentAt = now)
+          storeOwnAudio(peer = peer, groupId = null, audioPath = localCopy.path, sentAt = now, expireTimer = expireTimer)
           Log.i(TAG, "Voice note sent to ${peer.take(12)}")
           Result.Success
         } else {
@@ -155,8 +158,9 @@ object MessageSender {
     }
   }
 
-  private fun storeOwnAudio(peer: String, groupId: String?, audioPath: String, sentAt: Long) {
+  private fun storeOwnAudio(peer: String, groupId: String?, audioPath: String, sentAt: Long, expireTimer: Int = 0) {
     val selfAci = AppDeps.account.aci?.toString()
+    val expiresAt = if (expireTimer > 0) sentAt + expireTimer * 1000L else 0L
     AppDeps.messages.insert(
       peer = peer,
       senderAci = selfAci ?: peer,
@@ -166,7 +170,9 @@ object MessageSender {
       serverAt = sentAt,
       fromSelf = true,
       attachmentType = "audio/aac",
-      attachmentPath = audioPath
+      attachmentPath = audioPath,
+      expireTimerSeconds = expireTimer,
+      expiresAt = expiresAt
     )
   }
 
@@ -197,10 +203,12 @@ object MessageSender {
 
     val serviceId = ServiceId.parseOrNull(recipient) ?: return Result.Failure("Bad recipient")
     val now = System.currentTimeMillis()
+    val expireTimer = if (body != null) AppDeps.messages.getPeerExpireTimer(recipient) else 0
     val message = SignalServiceDataMessage.Builder()
       .withTimestamp(now)
       .withBody(body)
       .withReaction(reaction)
+      .withExpiration(expireTimer)
       .build()
 
     val webSocket = AppDeps.net.authWebSocket
@@ -218,8 +226,8 @@ object MessageSender {
       )
 
       if (result.isSuccess) {
-        sendSyncTranscript(message, Optional.of(address), setOf(serviceId))
-        storeOwn(peer = recipient, groupId = null, body = body, reaction = reaction, sentAt = now)
+        sendSyncTranscript(message, Optional.of(address), setOf(serviceId), if (expireTimer > 0) now else 0L)
+        storeOwn(peer = recipient, groupId = null, body = body, reaction = reaction, sentAt = now, expireTimer = expireTimer)
         Log.i(TAG, "Message sent to ${recipient.take(12)}")
         Result.Success
       } else {
@@ -252,6 +260,7 @@ object MessageSender {
     if (recipients.isEmpty()) return Result.Failure("No other members")
 
     val now = System.currentTimeMillis()
+    val expireTimer = if (body != null) AppDeps.messages.getPeerExpireTimer(groupId) else 0
     val groupContext = SignalServiceGroupV2.newBuilder(GroupMasterKey(masterKeyBytes))
       .withRevision(revision)
       .build()
@@ -259,6 +268,7 @@ object MessageSender {
       .withTimestamp(now)
       .withBody(body)
       .withReaction(reaction)
+      .withExpiration(expireTimer)
       .asGroupMessage(groupContext)
       .build()
 
@@ -280,8 +290,8 @@ object MessageSender {
 
       val delivered = results.count { it.isSuccess }
       if (delivered > 0) {
-        sendSyncTranscript(message, Optional.empty(), recipients.toSet())
-        storeOwn(peer = groupId, groupId = groupId, body = body, reaction = reaction, sentAt = now)
+        sendSyncTranscript(message, Optional.empty(), recipients.toSet(), if (expireTimer > 0) now else 0L)
+        storeOwn(peer = groupId, groupId = groupId, body = body, reaction = reaction, sentAt = now, expireTimer = expireTimer)
         Log.i(TAG, "Group message sent to $delivered/${results.size} member(s)")
         Result.Success
       } else {
@@ -343,13 +353,18 @@ object MessageSender {
   }
 
   /** Tells our other devices (the phone) about the send. Best-effort: the message already went out. */
-  private fun sendSyncTranscript(message: SignalServiceDataMessage, destination: Optional<SignalServiceAddress>, recipients: Set<ServiceId>) {
+  private fun sendSyncTranscript(
+    message: SignalServiceDataMessage,
+    destination: Optional<SignalServiceAddress>,
+    recipients: Set<ServiceId>,
+    expirationStartTimestamp: Long = 0L
+  ) {
     try {
       val transcript = SentTranscriptMessage(
         destination,
         message.timestamp,
         Optional.of(message),
-        0, // expirationStartTimestamp
+        expirationStartTimestamp,
         recipients.associateWith { false }, // no unidentified delivery
         false, // isRecipientUpdate
         Optional.empty(), // storyMessage
@@ -363,7 +378,14 @@ object MessageSender {
   }
 
   /** Records what we just sent: a message row for a text, a reaction row for a reaction. */
-  private fun storeOwn(peer: String, groupId: String?, body: String?, reaction: SignalServiceDataMessage.Reaction?, sentAt: Long) {
+  private fun storeOwn(
+    peer: String,
+    groupId: String?,
+    body: String?,
+    reaction: SignalServiceDataMessage.Reaction?,
+    sentAt: Long,
+    expireTimer: Int = 0
+  ) {
     val selfAci = AppDeps.account.aci?.toString()
     if (reaction != null) {
       AppDeps.messages.applyReaction(
@@ -376,6 +398,7 @@ object MessageSender {
       )
     }
     if (body != null) {
+      val expiresAt = if (expireTimer > 0) sentAt + expireTimer * 1000L else 0L
       AppDeps.messages.insert(
         peer = peer,
         senderAci = selfAci ?: peer,
@@ -383,7 +406,9 @@ object MessageSender {
         body = body,
         sentAt = sentAt,
         serverAt = sentAt,
-        fromSelf = true
+        fromSelf = true,
+        expireTimerSeconds = expireTimer,
+        expiresAt = expiresAt
       )
     }
   }

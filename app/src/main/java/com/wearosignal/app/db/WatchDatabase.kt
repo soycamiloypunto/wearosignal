@@ -8,12 +8,13 @@ import android.database.sqlite.SQLiteOpenHelper
  * Single SQLite database holding the Signal protocol stores (per account identity: "aci"/"pni"),
  * received messages, and the contact-name cache.
  */
-class WatchDatabase(context: Context) : SQLiteOpenHelper(context, "wearsignal.db", null, 8) {
+class WatchDatabase(context: Context) : SQLiteOpenHelper(context, "wearsignal.db", null, 9) {
 
   override fun onCreate(db: SQLiteDatabase) {
     createDirectoryTable(db)
     createGroupsTable(db)
     createReactionsTable(db)
+    createPeerTimersTable(db)
     db.execSQL(
       """
       CREATE TABLE identities (
@@ -109,7 +110,9 @@ class WatchDatabase(context: Context) : SQLiteOpenHelper(context, "wearsignal.db
         attachment_type TEXT,
         attachment_pointer BLOB,
         attachment_path TEXT,
-        seen_at INTEGER NOT NULL DEFAULT 0
+        seen_at INTEGER NOT NULL DEFAULT 0,
+        expire_timer INTEGER NOT NULL DEFAULT 0,
+        expires_at INTEGER NOT NULL DEFAULT 0
       )
       """
     )
@@ -167,6 +170,23 @@ class WatchDatabase(context: Context) : SQLiteOpenHelper(context, "wearsignal.db
     if (oldVersion < 8) {
       createReactionsTable(db)
     }
+    if (oldVersion < 9) {
+      db.execSQL("ALTER TABLE messages ADD COLUMN expire_timer INTEGER NOT NULL DEFAULT 0")
+      db.execSQL("ALTER TABLE messages ADD COLUMN expires_at INTEGER NOT NULL DEFAULT 0")
+      createPeerTimersTable(db)
+    }
+  }
+
+  /** Active disappearing-message timer (in seconds, 0 = off) per conversation peer. */
+  private fun createPeerTimersTable(db: SQLiteDatabase) {
+    db.execSQL(
+      """
+      CREATE TABLE IF NOT EXISTS peer_timers (
+        peer TEXT PRIMARY KEY,
+        expire_timer INTEGER NOT NULL DEFAULT 0
+      )
+      """
+    )
   }
 
   /**

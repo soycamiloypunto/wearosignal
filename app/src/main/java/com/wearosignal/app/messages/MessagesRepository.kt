@@ -2,6 +2,7 @@ package com.wearosignal.app.messages
 
 import android.content.ContentValues
 import com.wearosignal.app.db.WatchDatabase
+import java.io.File
 
 /** One conversation in the conversation list, keyed by [peer] (group id or 1:1 ACI). */
 data class ConversationRow(
@@ -59,6 +60,54 @@ class MessagesRepository(private val db: WatchDatabase) {
     const val MAX_PER_CONVERSATION = 100
   }
 
+  fun setPeerExpireTimer(peer: String, expireTimerSeconds: Int) {
+    val values = ContentValues().apply {
+      put("peer", peer)
+      put("expire_timer", expireTimerSeconds.coerceAtLeast(0))
+    }
+    db.writableDatabase.insertWithOnConflict("peer_timers", null, values, android.database.sqlite.SQLiteDatabase.CONFLICT_REPLACE)
+  }
+
+  fun getPeerExpireTimer(peer: String): Int {
+    db.readableDatabase.rawQuery(
+      "SELECT expire_timer FROM peer_timers WHERE peer = ? LIMIT 1",
+      arrayOf(peer)
+    ).use { cursor ->
+      if (cursor.moveToFirst()) return cursor.getInt(0)
+    }
+    return 0
+  }
+
+  /**
+   * Deletes all messages whose disappearing-message deadline ([expires_at]) has passed,
+   * removes their cached attachment files, and prunes orphaned reactions.
+   */
+  fun purgeExpired(now: Long = System.currentTimeMillis()): Int {
+    val wdb = db.writableDatabase
+    val pathsToDelete = mutableListOf<String>()
+    wdb.rawQuery(
+      "SELECT attachment_path FROM messages WHERE expires_at > 0 AND expires_at <= ? AND attachment_path IS NOT NULL",
+      arrayOf(now.toString())
+    ).use { cursor ->
+      while (cursor.moveToNext()) {
+        cursor.getString(0)?.let { pathsToDelete += it }
+      }
+    }
+    val deleted = wdb.delete("messages", "expires_at > 0 AND expires_at <= ?", arrayOf(now.toString()))
+    if (deleted > 0) {
+      pathsToDelete.forEach { path -> runCatching { File(path).delete() } }
+      wdb.execSQL(
+        """
+        DELETE FROM reactions WHERE NOT EXISTS (
+          SELECT 1 FROM messages m
+          WHERE m.peer = reactions.peer AND m.sent_at = reactions.target_sent_at AND m.sender_aci = reactions.target_author_aci
+        )
+        """
+      )
+    }
+    return deleted
+  }
+
   fun insert(
     peer: String,
     senderAci: String,
@@ -69,8 +118,13 @@ class MessagesRepository(private val db: WatchDatabase) {
     fromSelf: Boolean,
     attachmentType: String? = null,
     attachmentPointer: ByteArray? = null,
-    attachmentPath: String? = null
+    attachmentPath: String? = null,
+    expireTimerSeconds: Int = 0,
+    expiresAt: Long = 0L
   ): Boolean {
+    if (expiresAt > 0L && expiresAt <= System.currentTimeMillis()) {
+      return false
+    }
     // Signal identifies a message by (sender, sent timestamp). An envelope the server
     // redelivers because its ack was lost (e.g. the connection dropped mid-drain) must
     // not become a second copy.
@@ -92,6 +146,8 @@ class MessagesRepository(private val db: WatchDatabase) {
       put("attachment_type", attachmentType)
       put("attachment_pointer", attachmentPointer)
       put("attachment_path", attachmentPath)
+      put("expire_timer", expireTimerSeconds.coerceAtLeast(0))
+      put("expires_at", expiresAt.coerceAtLeast(0L))
     }
     db.writableDatabase.insert("messages", null, values)
     db.writableDatabase.execSQL(
@@ -161,6 +217,7 @@ class MessagesRepository(private val db: WatchDatabase) {
    * resolved where known. Ask for one more than you show to learn whether more exist.
    */
   fun conversations(limit: Int = Int.MAX_VALUE): List<ConversationRow> {
+    purgeExpired()
     val result = mutableListOf<ConversationRow>()
     db.readableDatabase.rawQuery(
       """
@@ -208,6 +265,7 @@ class MessagesRepository(private val db: WatchDatabase) {
    * "Seen" means read on the phone (synced over) or its thread viewed on the watch.
    */
   fun unreadCount(): Int {
+    purgeExpired()
     db.readableDatabase.rawQuery(
       "SELECT COUNT(*) FROM messages WHERE from_self = 0 AND seen_at = 0",
       null
@@ -279,6 +337,7 @@ class MessagesRepository(private val db: WatchDatabase) {
    * cache and reactions attached. [selfAci] identifies our own reactions (for the toggle UI).
    */
   fun thread(peer: String, selfAci: String? = null): List<MessageRow> {
+    purgeExpired()
     val reactionsByTarget = threadReactions(peer, selfAci)
     val result = mutableListOf<MessageRow>()
     db.readableDatabase.rawQuery(

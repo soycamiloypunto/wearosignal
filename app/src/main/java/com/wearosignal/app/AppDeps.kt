@@ -61,6 +61,7 @@ object AppDeps {
         "directory",
         "groups",
         "reactions",
+        "peer_timers",
         "identities",
         "sessions",
         "one_time_prekeys",

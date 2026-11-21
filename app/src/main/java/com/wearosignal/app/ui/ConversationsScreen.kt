@@ -28,6 +28,7 @@ import androidx.wear.compose.material.CircularProgressIndicator
 import androidx.wear.compose.material.Icon
 import androidx.wear.compose.material.MaterialTheme
 import androidx.wear.compose.material.Text
+import com.wearosignal.app.BuildConfig
 import com.wearosignal.app.R
 import com.wearosignal.app.messages.ConversationRow
 
@@ -51,12 +52,22 @@ fun ConversationsScreen(
   val listState = rememberScalingLazyListState()
   ScalingLazyColumn(state = listState) {
     item {
-      Text(
-        text = stringResource(R.string.app_name),
-        style = MaterialTheme.typography.title3,
-        textAlign = TextAlign.Center,
+      Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 2.dp)
-      )
+      ) {
+        Text(
+          text = stringResource(R.string.app_name),
+          style = MaterialTheme.typography.title3,
+          textAlign = TextAlign.Center
+        )
+        Text(
+          text = "v${BuildConfig.VERSION_NAME}",
+          style = MaterialTheme.typography.caption3,
+          color = Color(0xFF9E9E9E),
+          textAlign = TextAlign.Center
+        )
+      }
     }
 
     if (polling) {

@@ -7,15 +7,20 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.wear.compose.material.MaterialTheme
@@ -66,11 +71,13 @@ fun WearSignalNavHost() {
   var polling by remember { mutableStateOf(false) }
   var pollCount by remember { mutableIntStateOf(0) } // bumped after each poll so screens reload
   var pollStatus by remember { mutableStateOf<String?>(null) } // error text when the last poll failed
+  var lastAutoPollAt by remember { mutableLongStateOf(0L) }
   val pollProgress by Poller.progress.collectAsState()
 
   fun pollNow() {
     if (polling) return
     polling = true
+    lastAutoPollAt = System.currentTimeMillis()
     scope.launch {
       // Silent: the user is looking at the app, so notifying for what they're reading is noise.
       val result = withContext(Dispatchers.IO) { Poller.poll(silent = true) }
@@ -81,6 +88,25 @@ fun WearSignalNavHost() {
         is Poller.Result.Success -> null
       }
     }
+  }
+
+  // Auto-purge expired messages and auto-sync whenever the user opens or resumes the app.
+  val lifecycleOwner = LocalLifecycleOwner.current
+  DisposableEffect(lifecycleOwner) {
+    val observer = LifecycleEventObserver { _, event ->
+      if (event == Lifecycle.Event.ON_RESUME && AppDeps.account.isLinked) {
+        scope.launch {
+          val purged = withContext(Dispatchers.IO) { AppDeps.messages.purgeExpired() }
+          if (purged > 0) pollCount++
+        }
+        val now = System.currentTimeMillis()
+        if (!polling && now - lastAutoPollAt >= 5_000L) {
+          pollNow()
+        }
+      }
+    }
+    lifecycleOwner.lifecycle.addObserver(observer)
+    onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
   }
 
   SwipeDismissableNavHost(navController = navController, startDestination = startDestination) {
@@ -143,6 +169,12 @@ fun WearSignalNavHost() {
       var messages by remember { mutableStateOf(listOf<MessageRow>()) }
       var refreshKey by remember { mutableIntStateOf(0) }
       val context = LocalContext.current
+      // Auto-refresh when entering any chat so new messages & disappearing timers update immediately.
+      LaunchedEffect(conversation.peer) {
+        if (AppDeps.account.isLinked && !polling) {
+          pollNow()
+        }
+      }
       LaunchedEffect(refreshKey, pollCount) {
         val newlySeen = withContext(Dispatchers.IO) {
           messages = AppDeps.messages.thread(conversation.peer, AppDeps.account.aci?.toString())
