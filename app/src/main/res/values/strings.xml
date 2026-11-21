@@ -17,6 +17,11 @@
     <string name="conversations_load_more">Load more</string>
     <string name="conversations_new_message">New message</string>
     <string name="conversations_settings">Settings</string>
+    <string name="conversations_pin">Pin chat</string>
+    <string name="conversations_unpin">Unpin chat</string>
+    <string name="conversations_pin_limit">Max 3 pinned chats</string>
+    <string name="conversations_delete">Delete chat</string>
+    <string name="conversations_delete_confirm">Tap again to delete</string>
 
     <!-- Thread -->
     <string name="thread_reply">Reply</string>
@@ -34,9 +39,13 @@
     <string name="thread_quick_edit">Edit quick replies</string>
     <string name="thread_quick_done">Done editing</string>
     <string name="thread_quick_edit_label">Edit quick reply</string>
+    <string name="thread_delete_for_me">Delete for me</string>
+    <string name="thread_delete_for_all">Delete for all</string>
 
     <!-- Compose -->
     <string name="compose_title">New message</string>
+    <string name="compose_on_signal">On Signal</string>
+    <string name="compose_without_signal">Not on Signal</string>
     <string name="compose_refresh">Refresh contacts</string>
     <string name="compose_refreshing">Refreshing…</string>
     <string name="compose_looking_up">Looking up contacts…</string>
@@ -69,6 +78,9 @@
     <string name="status_notifications">Notifications</string>
     <string name="status_read_receipts">Read receipts</string>
     <string name="status_lockscreen">Private lock</string>
+    <string name="status_clear_chats">Clear all chats</string>
+    <string name="status_clear_chats_confirm">Tap again to clear</string>
+    <string name="status_clear_chats_desc">Deletes messages on watch</string>
     <string name="status_unlink">Unlink watch</string>
     <string name="status_unlink_confirm">Tap again to unlink</string>
     <string name="status_unlink_desc">Clears local chats &amp; keys</string>

@@ -48,7 +48,10 @@ import java.util.Date
  * circular interval selector buttons (1m / 5m / 15m), and a circular unlink action button.
  */
 @Composable
-fun StatusScreen(onUnlinked: () -> Unit = {}) {
+fun StatusScreen(
+  onChatsCleared: () -> Unit = {},
+  onUnlinked: () -> Unit = {}
+) {
   val context = LocalContext.current
   val scope = rememberCoroutineScope()
   val account = AppDeps.account
@@ -58,6 +61,7 @@ fun StatusScreen(onUnlinked: () -> Unit = {}) {
   var readReceipts by remember { mutableStateOf(account.sendReadReceipts) }
   var lockscreenPrivacy by remember { mutableStateOf(account.lockscreenPrivacyEnabled) }
   var override by remember { mutableStateOf(account.phoneConnectedOverride) }
+  var confirmClearChats by remember { mutableStateOf(false) }
   var confirmUnlink by remember { mutableStateOf(false) }
 
   ScalingLazyColumn(state = listState) {
@@ -243,6 +247,47 @@ fun StatusScreen(onUnlinked: () -> Unit = {}) {
           modifier = Modifier.fillMaxWidth()
         )
       }
+    }
+
+    // Clear all local chats on the watch without unlinking
+    item {
+      Chip(
+        label = {
+          Text(
+            stringResource(
+              if (confirmClearChats) R.string.status_clear_chats_confirm else R.string.status_clear_chats
+            ),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+          )
+        },
+        secondaryLabel = {
+          Text(
+            stringResource(R.string.status_clear_chats_desc),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+          )
+        },
+        onClick = {
+          if (!confirmClearChats) {
+            confirmClearChats = true
+          } else {
+            confirmClearChats = false
+            scope.launch {
+              withContext(Dispatchers.IO) {
+                AppDeps.messages.clearAllChats()
+                AppDeps.account.pinnedPeers = emptyList()
+              }
+              onChatsCleared()
+            }
+          }
+        },
+        colors = ChipDefaults.chipColors(
+          backgroundColor = if (confirmClearChats) Color(0xFFB71C1C) else Color(0xFF2D232E),
+          contentColor = Color.White
+        ),
+        modifier = Modifier.fillMaxWidth().padding(top = 6.dp)
+      )
     }
 
     // Circular Unlink Watch action button with tap-again confirmation

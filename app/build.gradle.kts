@@ -26,8 +26,8 @@ android {
     applicationId = "com.wearosignal.app"
     minSdk = 30
     targetSdk = 35
-    versionCode = 7
-    versionName = "0.0.7"
+    versionCode = 8
+    versionName = "0.0.8"
 
     ndk {
       // armeabi-v7a: Pixel Watch (incl. Pixel Watch 4) runs a 32-bit ARM userspace.

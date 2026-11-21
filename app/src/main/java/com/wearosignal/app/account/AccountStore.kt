@@ -138,11 +138,45 @@ class AccountStore(context: Context) {
       putString("quick_replies", value.take(5).joinToString("\n"))
     }
 
+  /** Up to 3 pinned conversation peer IDs kept at the top of the home chat list. */
+  var pinnedPeers: List<String>
+    get() = prefs.getString("pinned_peers", null)
+      ?.split("\n")
+      ?.filter { it.isNotBlank() }
+      ?.distinct()
+      ?.take(MAX_PINNED_CHATS)
+      ?: emptyList()
+    set(value) = prefs.edit {
+      putString("pinned_peers", value.distinct().take(MAX_PINNED_CHATS).joinToString("\n"))
+    }
+
+  /** Toggles pin state for [peer]. Returns false only if trying to pin when 3 chats are already pinned. */
+  fun togglePin(peer: String): Boolean {
+    val current = pinnedPeers.toMutableList()
+    if (peer in current) {
+      current.remove(peer)
+      pinnedPeers = current
+      return true
+    }
+    if (current.size >= MAX_PINNED_CHATS) return false
+    current.add(0, peer)
+    pinnedPeers = current
+    return true
+  }
+
+  fun unpin(peer: String) {
+    val current = pinnedPeers
+    if (peer in current) {
+      pinnedPeers = current.filterNot { it == peer }
+    }
+  }
+
   fun clear() {
     prefs.edit { clear() }
   }
 
   companion object {
+    const val MAX_PINNED_CHATS = 3
     val DEFAULT_FAVORITE_EMOJIS = listOf("👍", "❤️", "😂", "😊", "🙏", "👌", "🔥", "😢", "🎉")
     val DEFAULT_QUICK_REPLIES = listOf("Ok 👍", "Ya voy", "En un momento", "Gracias", "Te llamo luego")
   }

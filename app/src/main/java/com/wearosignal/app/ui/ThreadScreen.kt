@@ -95,7 +95,9 @@ fun ThreadScreen(
   onEditQuickReply: (Int) -> Unit,
   onSendVoiceNote: (File) -> Unit,
   onReact: (MessageRow, String) -> Unit,
-  onReactCustom: (MessageRow) -> Unit
+  onReactCustom: (MessageRow) -> Unit,
+  onDeleteForMe: (MessageRow) -> Unit = {},
+  onDeleteForEveryone: (MessageRow) -> Unit = {}
 ) {
   val context = LocalContext.current
   // items: title + messages + reply bar; messages load asynchronously,
@@ -296,6 +298,7 @@ fun ThreadScreen(
     reactingTo?.let { message ->
       ReactionPalette(
         myReaction = message.myReaction,
+        canDeleteForAll = message.fromSelf,
         onPick = { emoji ->
           reactingTo = null
           onReact(message, emoji)
@@ -303,6 +306,14 @@ fun ThreadScreen(
         onPickCustom = {
           reactingTo = null
           onReactCustom(message)
+        },
+        onDeleteForMe = {
+          reactingTo = null
+          onDeleteForMe(message)
+        },
+        onDeleteForAll = {
+          reactingTo = null
+          onDeleteForEveryone(message)
         },
         onDismiss = { reactingTo = null }
       )
@@ -319,15 +330,18 @@ fun ThreadScreen(
 @Composable
 private fun ReactionPalette(
   myReaction: String?,
+  canDeleteForAll: Boolean,
   onPick: (String) -> Unit,
   onPickCustom: () -> Unit,
+  onDeleteForMe: () -> Unit,
+  onDeleteForAll: () -> Unit,
   onDismiss: () -> Unit
 ) {
   Box(
-    modifier = Modifier.fillMaxSize().background(Color(0xE6000000)).clickable(onClick = onDismiss),
+    modifier = Modifier.fillMaxSize().background(Color(0xEE000000)).clickable(onClick = onDismiss),
     contentAlignment = Alignment.Center
   ) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(horizontal = 12.dp)) {
       REACTION_EMOJIS.chunked(3).forEach { rowEmojis ->
         Row {
           rowEmojis.forEach { emoji ->
@@ -344,6 +358,25 @@ private fun ReactionPalette(
           PaletteButton(label = myReaction, highlighted = true, onClick = { onPick(myReaction) })
         }
         PaletteButton(label = "＋", highlighted = false, onClick = onPickCustom)
+      }
+      Row(
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        modifier = Modifier.padding(top = 6.dp)
+      ) {
+        Chip(
+          label = { Text("🗑 ${stringResource(R.string.thread_delete_for_me)}", style = MaterialTheme.typography.caption3, maxLines = 1) },
+          onClick = onDeleteForMe,
+          colors = ChipDefaults.chipColors(backgroundColor = Color(0xFF4A1C1C), contentColor = Color.White),
+          modifier = Modifier.weight(1f)
+        )
+        if (canDeleteForAll) {
+          Chip(
+            label = { Text("🗑 ${stringResource(R.string.thread_delete_for_all)}", style = MaterialTheme.typography.caption3, maxLines = 1) },
+            onClick = onDeleteForAll,
+            colors = ChipDefaults.chipColors(backgroundColor = Color(0xFFB71C1C), contentColor = Color.White),
+            modifier = Modifier.weight(1f)
+          )
+        }
       }
     }
   }

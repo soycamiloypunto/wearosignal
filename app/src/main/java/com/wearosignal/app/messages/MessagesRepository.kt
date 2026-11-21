@@ -108,6 +108,91 @@ class MessagesRepository(private val db: WatchDatabase) {
     return deleted
   }
 
+  /** Deletes a single message (matched by peer, author, sent_at), its cached attachment, and its reactions. */
+  fun deleteMessage(peer: String, senderAci: String, sentAt: Long): Boolean {
+    val wdb = db.writableDatabase
+    val paths = mutableListOf<String>()
+    wdb.rawQuery(
+      "SELECT attachment_path FROM messages WHERE peer = ? AND sender_aci = ? AND sent_at = ? AND attachment_path IS NOT NULL",
+      arrayOf(peer, senderAci, sentAt.toString())
+    ).use { cursor ->
+      while (cursor.moveToNext()) cursor.getString(0)?.let { paths += it }
+    }
+    val deleted = wdb.delete(
+      "messages",
+      "peer = ? AND sender_aci = ? AND sent_at = ?",
+      arrayOf(peer, senderAci, sentAt.toString())
+    )
+    if (deleted > 0) {
+      paths.forEach { runCatching { File(it).delete() } }
+      wdb.delete(
+        "reactions",
+        "peer = ? AND target_author_aci = ? AND target_sent_at = ?",
+        arrayOf(peer, senderAci, sentAt.toString())
+      )
+    }
+    return deleted > 0
+  }
+
+  /** Deletes a single message by author + sent timestamp across any thread (for incoming RemoteDelete / DeleteForMe). */
+  fun deleteMessageByAuthorAndTimestamp(senderAci: String, sentAt: Long): Boolean {
+    val wdb = db.writableDatabase
+    val paths = mutableListOf<String>()
+    wdb.rawQuery(
+      "SELECT attachment_path FROM messages WHERE sender_aci = ? AND sent_at = ? AND attachment_path IS NOT NULL",
+      arrayOf(senderAci, sentAt.toString())
+    ).use { cursor ->
+      while (cursor.moveToNext()) cursor.getString(0)?.let { paths += it }
+    }
+    val deleted = wdb.delete("messages", "sender_aci = ? AND sent_at = ?", arrayOf(senderAci, sentAt.toString()))
+    if (deleted > 0) {
+      paths.forEach { runCatching { File(it).delete() } }
+      wdb.delete("reactions", "target_author_aci = ? AND target_sent_at = ?", arrayOf(senderAci, sentAt.toString()))
+    }
+    return deleted > 0
+  }
+
+  /** Returns up to [limit] most recent (senderAci, sentAt) pairs for [peer] (used for DeleteForMe conversation sync). */
+  fun recentAddressableMessages(peer: String, limit: Int = 5): List<Pair<String, Long>> {
+    val list = mutableListOf<Pair<String, Long>>()
+    db.readableDatabase.rawQuery(
+      "SELECT sender_aci, sent_at FROM messages WHERE peer = ? ORDER BY sent_at DESC LIMIT ?",
+      arrayOf(peer, limit.toString())
+    ).use { cursor ->
+      while (cursor.moveToNext()) {
+        list += cursor.getString(0) to cursor.getLong(1)
+      }
+    }
+    return list
+  }
+
+  /** Deletes an entire conversation (all messages, reactions, and cached attachments) on the watch. */
+  fun deleteConversation(peer: String) {
+    val wdb = db.writableDatabase
+    val paths = mutableListOf<String>()
+    wdb.rawQuery(
+      "SELECT attachment_path FROM messages WHERE peer = ? AND attachment_path IS NOT NULL",
+      arrayOf(peer)
+    ).use { cursor ->
+      while (cursor.moveToNext()) cursor.getString(0)?.let { paths += it }
+    }
+    wdb.delete("messages", "peer = ?", arrayOf(peer))
+    wdb.delete("reactions", "peer = ?", arrayOf(peer))
+    paths.forEach { runCatching { File(it).delete() } }
+  }
+
+  /** Clears all chat messages, reactions, and cached attachments on the watch without unlinking the account. */
+  fun clearAllChats() {
+    val wdb = db.writableDatabase
+    val paths = mutableListOf<String>()
+    wdb.rawQuery("SELECT attachment_path FROM messages WHERE attachment_path IS NOT NULL", emptyArray()).use { cursor ->
+      while (cursor.moveToNext()) cursor.getString(0)?.let { paths += it }
+    }
+    wdb.delete("messages", null, null)
+    wdb.delete("reactions", null, null)
+    paths.forEach { runCatching { File(it).delete() } }
+  }
+
   fun insert(
     peer: String,
     senderAci: String,

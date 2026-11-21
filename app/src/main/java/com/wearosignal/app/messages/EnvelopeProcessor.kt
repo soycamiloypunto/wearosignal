@@ -130,6 +130,10 @@ class EnvelopeProcessor(private val messages: MessagesRepository) {
         applyReaction(reaction, peer = groupId ?: sourceServiceId.toString(), reacterAci = sourceServiceId.toString())
         return null
       }
+      data.delete?.targetSentTimestamp?.let { targetTs ->
+        messages.deleteMessageByAuthorAndTimestamp(sourceServiceId.toString(), targetTs)
+        return null
+      }
       val groupId = data.groupV2?.let { recordGroup(it.masterKey!!.toByteArray(), it.revision ?: 0) }
       val peer = groupId ?: sourceServiceId.toString()
       val expireTimer = (data.expireTimer ?: 0).coerceAtLeast(0)
@@ -165,6 +169,31 @@ class EnvelopeProcessor(private val messages: MessagesRepository) {
       if (markers.isNotEmpty()) {
         markSeenFromSync(markers)
       }
+      // Sync deletions performed on our phone ("Delete for me" / "Delete chat")
+      sync.deleteForMe?.let { dfm ->
+        dfm.messageDeletes.forEach { md ->
+          md.messages.forEach { msg ->
+            val author = ServiceId.parseOrNull(msg.authorServiceId, msg.authorServiceIdBinary)?.toString()
+            val ts = msg.sentTimestamp
+            if (author != null && ts != null) {
+              messages.deleteMessageByAuthorAndTimestamp(author, ts)
+            }
+          }
+        }
+        val convIds = dfm.conversationDeletes.mapNotNull { it.conversation } +
+          dfm.localOnlyConversationDeletes.mapNotNull { it.conversation }
+        convIds.forEach { cid ->
+          val groupIdBytes = cid.threadGroupId
+          val peer = when {
+            groupIdBytes != null -> android.util.Base64.encodeToString(groupIdBytes.toByteArray(), android.util.Base64.NO_WRAP)
+            else -> ServiceId.parseOrNull(cid.threadServiceId, cid.threadServiceIdBinary)?.toString()
+          }
+          if (peer != null) {
+            messages.deleteConversation(peer)
+            AppDeps.account.unpin(peer)
+          }
+        }
+      }
     }
 
     content.syncMessage?.sent?.let { sent ->
@@ -175,6 +204,10 @@ class EnvelopeProcessor(private val messages: MessagesRepository) {
         val destination = ServiceId.parseOrNull(sent.destinationServiceId, sent.destinationServiceIdBinary)?.toString()
         val peer = groupId ?: destination ?: return null
         applyReaction(reaction, peer = peer, reacterAci = selfAci.toString())
+        return null
+      }
+      data.delete?.targetSentTimestamp?.let { targetTs ->
+        messages.deleteMessageByAuthorAndTimestamp(selfAci.toString(), targetTs)
         return null
       }
       val groupId = data.groupV2?.let { recordGroup(it.masterKey!!.toByteArray(), it.revision ?: 0) }

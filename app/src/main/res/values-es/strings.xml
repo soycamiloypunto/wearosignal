@@ -17,6 +17,11 @@
     <string name="conversations_load_more">Cargar más</string>
     <string name="conversations_new_message">Nuevo mensaje</string>
     <string name="conversations_settings">Ajustes</string>
+    <string name="conversations_pin">Anclar chat</string>
+    <string name="conversations_unpin">Desanclar chat</string>
+    <string name="conversations_pin_limit">Máximo 3 chats anclados</string>
+    <string name="conversations_delete">Eliminar chat</string>
+    <string name="conversations_delete_confirm">Toca otra vez para eliminar</string>
 
     <!-- Thread -->
     <string name="thread_reply">Responder</string>
@@ -34,9 +39,13 @@
     <string name="thread_quick_edit">Editar rápidas</string>
     <string name="thread_quick_done">Listo</string>
     <string name="thread_quick_edit_label">Editar respuesta rápida</string>
+    <string name="thread_delete_for_me">Borrar para mí</string>
+    <string name="thread_delete_for_all">Borrar para todos</string>
 
     <!-- Compose -->
     <string name="compose_title">Nuevo mensaje</string>
+    <string name="compose_on_signal">En Signal</string>
+    <string name="compose_without_signal">Sin Signal</string>
     <string name="compose_refresh">Actualizar contactos</string>
     <string name="compose_refreshing">Actualizando…</string>
     <string name="compose_looking_up">Buscando contactos…</string>
@@ -69,6 +78,9 @@
     <string name="status_notifications">Notificaciones</string>
     <string name="status_read_receipts">Confirm. lectura</string>
     <string name="status_lockscreen">Bloqueo privado</string>
+    <string name="status_clear_chats">Vaciar chats</string>
+    <string name="status_clear_chats_confirm">Toca otra vez para vaciar</string>
+    <string name="status_clear_chats_desc">Borra mensajes del reloj</string>
     <string name="status_unlink">Desvincular reloj</string>
     <string name="status_unlink_confirm">Toca otra vez para confirmar</string>
     <string name="status_unlink_desc">Borra chats y claves locales</string>

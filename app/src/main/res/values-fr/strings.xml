@@ -17,6 +17,11 @@
     <string name="conversations_load_more">Charger plus</string>
     <string name="conversations_new_message">Nouveau message</string>
     <string name="conversations_settings">Paramètres</string>
+    <string name="conversations_pin">Épingler</string>
+    <string name="conversations_unpin">Désépingler</string>
+    <string name="conversations_pin_limit">3 discussions max épinglées</string>
+    <string name="conversations_delete">Supprimer</string>
+    <string name="conversations_delete_confirm">Touchez encore pour supprimer</string>
 
     <!-- Thread -->
     <string name="thread_reply">Répondre</string>
@@ -34,9 +39,13 @@
     <string name="thread_quick_edit">Modifier rapides</string>
     <string name="thread_quick_done">Terminé</string>
     <string name="thread_quick_edit_label">Modifier la réponse rapide</string>
+    <string name="thread_delete_for_me">Supprimer pour moi</string>
+    <string name="thread_delete_for_all">Supprimer pour tous</string>
 
     <!-- Compose -->
     <string name="compose_title">Nouveau message</string>
+    <string name="compose_on_signal">Sur Signal</string>
+    <string name="compose_without_signal">Sans Signal</string>
     <string name="compose_refresh">Actualiser contacts</string>
     <string name="compose_refreshing">Actualisation…</string>
     <string name="compose_looking_up">Recherche des contacts…</string>
@@ -69,6 +78,9 @@
     <string name="status_notifications">Notifications</string>
     <string name="status_read_receipts">Confirm. lecture</string>
     <string name="status_lockscreen">Verrouillage privé</string>
+    <string name="status_clear_chats">Vider les discussions</string>
+    <string name="status_clear_chats_confirm">Touchez encore pour vider</string>
+    <string name="status_clear_chats_desc">Efface les messages de la montre</string>
     <string name="status_unlink">Dissocier la montre</string>
     <string name="status_unlink_confirm">Touchez encore pour confirmer</string>
     <string name="status_unlink_desc">Efface discussions et clés locales</string>

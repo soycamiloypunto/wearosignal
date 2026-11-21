@@ -123,6 +123,11 @@ fun WearSignalNavHost() {
     }
     composable("settings") {
       StatusScreen(
+        onChatsCleared = {
+          openConversation = null
+          pollCount++
+          Glanceables.requestUpdate(AppDeps.context)
+        },
         onUnlinked = {
           openConversation = null
           navController.navigate("pairing") {
@@ -134,18 +139,24 @@ fun WearSignalNavHost() {
     composable("conversations") {
       var limit by remember { mutableIntStateOf(10) }
       var conversations by remember { mutableStateOf(listOf<ConversationRow>()) }
+      var pinnedPeers by remember { mutableStateOf(AppDeps.account.pinnedPeers) }
       // Auto-sync silently once when opening the home screen so active chats stay fresh.
       LaunchedEffect(Unit) {
         if (AppDeps.account.isLinked && !polling) {
           pollNow()
         }
       }
-      LaunchedEffect(pollCount, limit) {
-        // one extra row tells us whether "Load more" has anything to load
-        conversations = withContext(Dispatchers.IO) { AppDeps.messages.conversations(limit + 1) }
+      LaunchedEffect(pollCount, limit, pinnedPeers) {
+        // Load extra rows so pinned conversations always float to the top cleanly.
+        val all = withContext(Dispatchers.IO) { AppDeps.messages.conversations(limit + pinnedPeers.size + 1) }
+        val pinnedSet = pinnedPeers.toSet()
+        val pinnedOrdered = pinnedPeers.mapNotNull { p -> all.firstOrNull { it.peer == p } }
+        val unpinned = all.filter { it.peer !in pinnedSet }
+        conversations = pinnedOrdered + unpinned
       }
       ConversationsScreen(
         conversations = conversations.take(limit),
+        pinnedPeers = pinnedPeers,
         hasMore = conversations.size > limit,
         polling = polling,
         pollProgress = pollProgress,
@@ -155,6 +166,21 @@ fun WearSignalNavHost() {
         onOpen = { conversation ->
           openConversation = conversation
           navController.navigate("thread")
+        },
+        onTogglePin = { conversation ->
+          val ok = AppDeps.account.togglePin(conversation.peer)
+          pinnedPeers = AppDeps.account.pinnedPeers
+          ok
+        },
+        onDeleteConversation = { conversation ->
+          scope.launch {
+            withContext(Dispatchers.IO) {
+              MessageSender.deleteConversationSynced(conversation.peer, conversation.isGroup)
+            }
+            pinnedPeers = AppDeps.account.pinnedPeers
+            pollCount++
+            Glanceables.requestUpdate(AppDeps.context)
+          }
         },
         onNewMessage = { navController.navigate("compose") },
         onOpenSettings = { navController.navigate("settings") }
@@ -267,7 +293,35 @@ fun WearSignalNavHost() {
           }
         },
         onReact = ::react,
-        onReactCustom = pickEmoji
+        onReactCustom = pickEmoji,
+        onDeleteForMe = { message ->
+          scope.launch {
+            withContext(Dispatchers.IO) {
+              MessageSender.deleteMessageForMe(
+                peer = conversation.peer,
+                isGroup = conversation.isGroup,
+                authorAci = message.senderAci,
+                sentAt = message.sentAt
+              )
+            }
+            refreshKey++
+            pollCount++
+          }
+        },
+        onDeleteForEveryone = { message ->
+          scope.launch {
+            val result = withContext(Dispatchers.IO) {
+              MessageSender.deleteMessageForEveryone(
+                peer = conversation.peer,
+                isGroup = conversation.isGroup,
+                targetSentAt = message.sentAt
+              )
+            }
+            pollStatus = if (result is MessageSender.Result.Failure) result.message else null
+            refreshKey++
+            pollCount++
+          }
+        }
       )
     }
     composable("compose") {

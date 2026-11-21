@@ -22,8 +22,13 @@ import org.whispersystems.signalservice.api.messages.multidevice.ReadMessage
 import org.whispersystems.signalservice.api.messages.multidevice.SentTranscriptMessage
 import org.whispersystems.signalservice.api.messages.multidevice.SignalServiceSyncMessage
 import org.whispersystems.signalservice.api.push.SignalServiceAddress
-import org.whispersystems.signalservice.internal.push.AttachmentUploadForm
+import okio.ByteString.Companion.toByteString
 import org.whispersystems.signalservice.internal.crypto.PaddingInputStream
+import org.whispersystems.signalservice.internal.push.AddressableMessage
+import org.whispersystems.signalservice.internal.push.AttachmentUploadForm
+import org.whispersystems.signalservice.internal.push.Content
+import org.whispersystems.signalservice.internal.push.ConversationIdentifier
+import org.whispersystems.signalservice.internal.push.SyncMessage
 import java.io.File
 import java.util.Optional
 
@@ -191,6 +196,164 @@ object MessageSender {
     val targetAuthor = ServiceId.parseOrNull(targetAuthorAci) ?: return Result.Failure("Bad target author")
     val reaction = SignalServiceDataMessage.Reaction(emoji, remove, targetAuthor, targetSentAt)
     return if (isGroup) sendToGroup(peer, body = null, reaction = reaction) else sendText(peer, body = null, reaction = reaction)
+  }
+
+  /**
+   * Remote-deletes our own message for everyone (both sides) and syncs the deletion to our phone,
+   * then deletes it locally on the watch.
+   */
+  fun deleteMessageForEveryone(peer: String, isGroup: Boolean, targetSentAt: Long): Result {
+    if (!AppDeps.account.isLinked) return Result.Failure("Not linked")
+    val selfAci = AppDeps.account.aci?.toString() ?: return Result.Failure("Not linked")
+    val now = System.currentTimeMillis()
+    val remoteDelete = SignalServiceDataMessage.RemoteDelete(targetSentAt)
+    val webSocket = AppDeps.net.authWebSocket
+    return try {
+      webSocket.connect()
+      if (isGroup) {
+        val (masterKeyBytes, revision) = AppDeps.database.readableDatabase.rawQuery(
+          "SELECT master_key, revision FROM groups WHERE group_id = ?",
+          arrayOf(peer)
+        ).use { cursor ->
+          if (!cursor.moveToFirst()) return Result.Failure("Unknown group")
+          cursor.getBlob(0) to cursor.getInt(1)
+        }
+        val memberAcis = GroupStateResolver.cachedMembers(peer)
+          ?: return Result.Failure("Group members not fetched yet")
+        val recipients = memberAcis.mapNotNull { ServiceId.parseOrNull(it) }
+        if (recipients.isEmpty()) return Result.Failure("No other members")
+        val groupContext = SignalServiceGroupV2.newBuilder(GroupMasterKey(masterKeyBytes))
+          .withRevision(revision)
+          .build()
+        val message = SignalServiceDataMessage.Builder()
+          .withTimestamp(now)
+          .withRemoteDelete(remoteDelete)
+          .asGroupMessage(groupContext)
+          .build()
+        val addresses = recipients.map { SignalServiceAddress(it) }
+        val results = AppDeps.net.messageSender.sendDataMessage(
+          addresses,
+          addresses.map { null as SealedSenderAccess? },
+          false,
+          ContentHint.RESENDABLE,
+          message,
+          LegacyGroupEvents.EMPTY,
+          null,
+          null,
+          true
+        )
+        if (results.any { it.isSuccess }) {
+          sendSyncTranscript(message, Optional.empty(), recipients.toSet())
+          AppDeps.messages.deleteMessage(peer, selfAci, targetSentAt)
+          Result.Success
+        } else {
+          Result.Failure("Could not delete for everyone")
+        }
+      } else {
+        val serviceId = ServiceId.parseOrNull(peer) ?: return Result.Failure("Bad recipient")
+        val address = SignalServiceAddress(serviceId)
+        val message = SignalServiceDataMessage.Builder()
+          .withTimestamp(now)
+          .withRemoteDelete(remoteDelete)
+          .build()
+        val result = AppDeps.net.messageSender.sendDataMessage(
+          address,
+          null,
+          ContentHint.RESENDABLE,
+          message,
+          IndividualSendEvents.EMPTY,
+          true,
+          false
+        )
+        if (result.isSuccess) {
+          sendSyncTranscript(message, Optional.of(address), setOf(serviceId))
+          AppDeps.messages.deleteMessage(peer, selfAci, targetSentAt)
+          Result.Success
+        } else {
+          Result.Failure("Could not delete for everyone")
+        }
+      }
+    } catch (t: Throwable) {
+      Log.w(TAG, "Remote delete failed", t)
+      Result.Failure(t.message ?: "Delete failed")
+    } finally {
+      webSocket.disconnect()
+    }
+  }
+
+  /**
+   * Deletes a single message locally on the watch AND sends a Signal DeleteForMe sync message
+   * so it is also deleted on our phone.
+   */
+  fun deleteMessageForMe(peer: String, isGroup: Boolean, authorAci: String, sentAt: Long) {
+    AppDeps.messages.deleteMessage(peer, authorAci, sentAt)
+    if (!AppDeps.account.isLinked) return
+    val convId = buildConversationIdentifier(peer, isGroup) ?: return
+    val authorId = ServiceId.parseOrNull(authorAci) ?: return
+    val addressable = AddressableMessage(
+      authorServiceIdBinary = authorId.toByteString(),
+      sentTimestamp = sentAt
+    )
+    val deleteForMe = SyncMessage.DeleteForMe(
+      messageDeletes = listOf(
+        SyncMessage.DeleteForMe.MessageDeletes(
+          conversation = convId,
+          messages = listOf(addressable)
+        )
+      )
+    )
+    sendDeleteForMeSync(deleteForMe)
+  }
+
+  /**
+   * Deletes an entire conversation locally on the watch (and unpins it) AND sends a Signal
+   * DeleteForMe.ConversationDelete sync message so the chat is also deleted on our phone.
+   */
+  fun deleteConversationSynced(peer: String, isGroup: Boolean) {
+    val recent = AppDeps.messages.recentAddressableMessages(peer, limit = 5)
+    AppDeps.messages.deleteConversation(peer)
+    AppDeps.account.unpin(peer)
+    if (!AppDeps.account.isLinked) return
+    val convId = buildConversationIdentifier(peer, isGroup) ?: return
+    val addressableRecent = recent.mapNotNull { (aciStr, ts) ->
+      ServiceId.parseOrNull(aciStr)?.let { sid ->
+        AddressableMessage(authorServiceIdBinary = sid.toByteString(), sentTimestamp = ts)
+      }
+    }
+    val deleteForMe = SyncMessage.DeleteForMe(
+      conversationDeletes = listOf(
+        SyncMessage.DeleteForMe.ConversationDelete(
+          conversation = convId,
+          mostRecentMessages = addressableRecent,
+          isFullDelete = true
+        )
+      )
+    )
+    sendDeleteForMeSync(deleteForMe)
+  }
+
+  private fun buildConversationIdentifier(peer: String, isGroup: Boolean): ConversationIdentifier? {
+    return if (isGroup) {
+      val groupBytes = runCatching { android.util.Base64.decode(peer, android.util.Base64.DEFAULT) }.getOrNull() ?: return null
+      ConversationIdentifier(threadGroupId = groupBytes.toByteString())
+    } else {
+      val sid = ServiceId.parseOrNull(peer) ?: return null
+      ConversationIdentifier(threadServiceIdBinary = sid.toByteString())
+    }
+  }
+
+  private fun sendDeleteForMeSync(deleteForMe: SyncMessage.DeleteForMe) {
+    val webSocket = AppDeps.net.authWebSocket
+    try {
+      webSocket.connect()
+      val content = Content(syncMessage = SyncMessage(deleteForMe = deleteForMe))
+      AppDeps.net.messageSender.sendSyncMessage(content, true, Optional.empty())
+      Log.i(TAG, "Sent DeleteForMe sync to phone")
+    } catch (t: Throwable) {
+      Log.w(TAG, "DeleteForMe sync failed (deleted locally)", t)
+    } finally {
+      webSocket.disconnect()
+    }
   }
 
   /**

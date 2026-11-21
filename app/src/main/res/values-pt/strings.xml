@@ -17,6 +17,11 @@
     <string name="conversations_load_more">Carregar mais</string>
     <string name="conversations_new_message">Nova mensagem</string>
     <string name="conversations_settings">Configurações</string>
+    <string name="conversations_pin">Fixar conversa</string>
+    <string name="conversations_unpin">Desafixar</string>
+    <string name="conversations_pin_limit">Máx. 3 conversas fixadas</string>
+    <string name="conversations_delete">Excluir conversa</string>
+    <string name="conversations_delete_confirm">Toque novamente para excluir</string>
 
     <!-- Thread -->
     <string name="thread_reply">Responder</string>
@@ -34,9 +39,13 @@
     <string name="thread_quick_edit">Editar rápidas</string>
     <string name="thread_quick_done">Concluído</string>
     <string name="thread_quick_edit_label">Editar resposta rápida</string>
+    <string name="thread_delete_for_me">Apagar para mim</string>
+    <string name="thread_delete_for_all">Apagar para todos</string>
 
     <!-- Compose -->
     <string name="compose_title">Nova mensagem</string>
+    <string name="compose_on_signal">No Signal</string>
+    <string name="compose_without_signal">Sem Signal</string>
     <string name="compose_refresh">Atualizar contatos</string>
     <string name="compose_refreshing">Atualizando…</string>
     <string name="compose_looking_up">Buscando contatos…</string>
@@ -69,6 +78,9 @@
     <string name="status_notifications">Notificações</string>
     <string name="status_read_receipts">Recibos de leitura</string>
     <string name="status_lockscreen">Bloqueio privado</string>
+    <string name="status_clear_chats">Limpar conversas</string>
+    <string name="status_clear_chats_confirm">Toque novamente para limpar</string>
+    <string name="status_clear_chats_desc">Apaga mensagens do relógio</string>
     <string name="status_unlink">Desvincular relógio</string>
     <string name="status_unlink_confirm">Toque novamente para confirmar</string>
     <string name="status_unlink_desc">Apaga conversas e chaves locais</string>
