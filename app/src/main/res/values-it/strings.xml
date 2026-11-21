@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">WearOSignal</string>
+    <string name="tile_label">WearOSignal</string>
+    <string name="complication_label">WearOSignal non letti</string>
+
+    <!-- Pairing -->
+    <string name="pairing_qr_description">Codice QR di associazione</string>
+    <string name="pairing_linking">Associazione…</string>
+    <string name="pairing_retry">Riprova</string>
+    <string name="pairing_hint">Scansiona in Signal → Dispositivi collegati</string>
+
+    <!-- Conversations -->
+    <string name="conversations_check">Cerca messaggi</string>
+    <string name="conversations_checking">Ricerca…</string>
+    <string name="conversations_empty">Nessuna conversazione</string>
+    <string name="conversations_load_more">Carica altri</string>
+    <string name="conversations_new_message">Nuovo messaggio</string>
+    <string name="conversations_settings">Impostazioni</string>
+
+    <!-- Thread -->
+    <string name="thread_reply">Rispondi</string>
+    <string name="thread_message_label">Messaggio a %1$s</string>
+    <string name="thread_react_label">Reagisci con un\'emoji</string>
+    <string name="thread_emoji_label">Invia un\'emoji</string>
+    <string name="thread_voice_recording">Registrazione…</string>
+    <string name="thread_voice_sending">Invio nota vocale…</string>
+    <string name="thread_voice_mic_needed">Permesso microfono richiesto</string>
+    <string name="thread_audio_play">▶ Audio</string>
+    <string name="thread_audio_stop">⏹ Ferma</string>
+    <string name="thread_video_play">▶ Video</string>
+    <string name="thread_emoji_edit_hint">Tocca uno per cambiare</string>
+    <string name="thread_emoji_pick_favorite">Scegli emoji preferita</string>
+    <string name="thread_quick_edit">Modifica rapide</string>
+    <string name="thread_quick_done">Fatto</string>
+    <string name="thread_quick_edit_label">Modifica risposta rapida</string>
+
+    <!-- Compose -->
+    <string name="compose_title">Nuovo messaggio</string>
+    <string name="compose_refresh">Aggiorna contatti</string>
+    <string name="compose_refreshing">Aggiornamento…</string>
+    <string name="compose_looking_up">Ricerca contatti…</string>
+    <string name="compose_no_contacts">Nessun contatto sull\'orologio</string>
+    <string name="compose_none_on_signal">%1$d numeri letti, nessuno su Signal</string>
+    <string name="compose_found_on_signal">%1$d su %2$d su Signal</string>
+    <string name="compose_rate_limited">Limite raggiunto — riprova tra %1$ds</string>
+    <string name="compose_permission_needed">Permesso contatti richiesto</string>
+
+    <!-- Settings / Status -->
+    <string name="status_not_linked">Non collegato</string>
+    <string name="status_never_polled">Mai sincronizzato</string>
+    <string name="status_last_poll">Ultima sinc.: %1$s</string>
+    <string name="status_notifications_on">Notifiche: sì</string>
+    <string name="status_notifications_off">Notifiche: no</string>
+    <string name="status_polls_every">Controlla ogni %1$d min</string>
+    <string name="status_phone_forwards">Solo inoltro dal telefono</string>
+    <string name="status_interval">Intervallo: %1$d min</string>
+    <string name="status_read_receipts_on">Conferme lettura: sì</string>
+    <string name="status_read_receipts_off">Conferme lettura: no</string>
+    <string name="status_read_receipts_on_desc">I mittenti vedono se leggi</string>
+    <string name="status_read_receipts_off_desc">Sincronizza solo il telefono</string>
+    <string name="status_lockscreen_private">Schermo blocc.: Privato</string>
+    <string name="status_lockscreen_show">Schermo blocc.: Mostra</string>
+    <string name="status_lockscreen_private_desc">Nasconde nome e messaggio</string>
+    <string name="status_lockscreen_show_desc">Mostra anteprima</string>
+    <string name="status_phone_auto">Telefono: auto</string>
+    <string name="status_phone_connected">Telefono: connesso</string>
+    <string name="status_phone_away">Telefono: assente</string>
+    <string name="status_notifications">Notifiche</string>
+    <string name="status_read_receipts">Conferme lettura</string>
+    <string name="status_lockscreen">Blocco privato</string>
+    <string name="status_unlink">Scollega orologio</string>
+    <string name="status_unlink_confirm">Tocca ancora per confermare</string>
+    <string name="status_unlink_desc">Cancella chat e chiavi locali</string>
+    <string name="status_about">Developed by Cristian Camilo\nClient Signal non ufficiale • AGPLv3</string>
+</resources>
