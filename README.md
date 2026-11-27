@@ -6,7 +6,7 @@
 
 Cliente independiente y open source de **Signal para Wear OS**, diseñado y optimizado para relojes inteligentes desde **Samsung Galaxy Watch 4 en adelante** (Wear OS 3+ / API 30+, arquitecturas `armeabi-v7a` y `arm64-v8a`).
 
-**Developed by Cristian Camilo** · [Página oficial / Documentación](https://soycamiloypunto.github.io/wearosignal/) · [Política de Privacidad](https://soycamiloypunto.github.io/wearosignal/#privacy)
+**Developed by Cristian Camilo** ([@criscamilotv en X](https://x.com/criscamilotv)) · [Página oficial / Documentación](https://soycamiloypunto.github.io/wearosignal/) · [Política de Privacidad](https://soycamiloypunto.github.io/wearosignal/#privacy)
 
 > **Aviso legal**: WearOSignal es un cliente independiente y no oficial para Signal, no afiliado ni respaldado por Signal Messenger, LLC. Distribuido bajo licencia **GNU AGPLv3** ([LICENSE](LICENSE)).
 
