@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>WearOSignal — Cliente de Signal para Wear OS</title>
-  <meta name="description" content="WearOSignal: cliente open source de Signal para Wear OS (Samsung Galaxy Watch 4+). Notas de voz con ondas en vivo, emojis favoritos, respuestas rápidas, stickers, GIFs, fotos y videos." />
+  <title>WearOSignal — Signal Client for Wear OS</title>
+  <meta name="description" content="WearOSignal: open-source Signal client for Wear OS (Samsung Galaxy Watch 4+). Voice notes with live waveform, favorite emojis, quick replies, pinned chats, stickers, GIFs, photos & videos." />
   <link rel="icon" type="image/png" href="icon/icon.png" />
   <style>
     :root {
@@ -35,42 +35,48 @@
     header {
       position: sticky; top: 0; z-index: 20;
       backdrop-filter: blur(12px);
-      background: rgba(11, 13, 23, 0.8);
+      background: rgba(11, 13, 23, 0.84);
       border-bottom: 1px solid var(--border);
     }
     .nav {
       display: flex; align-items: center; justify-content: space-between;
-      height: 64px;
+      min-height: 64px; gap: 12px; flex-wrap: wrap; padding: 8px 0;
     }
     .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1.08rem; color: var(--text); }
     .brand img { width: 32px; height: 32px; border-radius: 50%; background: #fff; padding: 2px; }
-    .nav-links { display: flex; gap: 20px; font-size: 0.92rem; }
+    .nav-links { display: flex; gap: 16px; font-size: 0.9rem; align-items: center; }
     .nav-links a { color: var(--muted); }
     .nav-links a:hover { color: var(--text); text-decoration: none; }
+    .lang-bar { display: flex; gap: 4px; background: var(--surface); border: 1px solid var(--border); padding: 3px; border-radius: 10px; }
+    .lang-btn {
+      background: transparent; border: none; color: var(--muted);
+      font-size: 0.78rem; font-weight: 700; padding: 5px 8px; border-radius: 7px; cursor: pointer;
+    }
+    .lang-btn.active { background: linear-gradient(135deg, var(--accent-1), var(--accent-2)); color: #fff; }
 
-    .hero { text-align: center; padding: 72px 0 56px; }
+    .hero { text-align: center; padding: 64px 0 48px; }
     .hero-icon {
-      width: 120px; height: 120px; border-radius: 50%; background: #fff; padding: 10px;
+      width: 116px; height: 116px; border-radius: 50%; background: #fff; padding: 10px;
       box-shadow: 0 18px 50px rgba(124, 58, 237, 0.35);
-      margin-bottom: 24px;
+      margin-bottom: 20px;
     }
     .badge {
       display: inline-block; padding: 5px 12px; border-radius: 999px;
       font-size: 0.8rem; font-weight: 600; letter-spacing: 0.02em;
       background: rgba(56, 189, 248, 0.12); color: var(--accent-3);
-      border: 1px solid rgba(56, 189, 248, 0.3); margin-bottom: 16px;
+      border: 1px solid rgba(56, 189, 248, 0.3); margin-bottom: 14px;
     }
     h1 {
-      font-size: clamp(2.1rem, 5vw, 3.3rem);
+      font-size: clamp(2.1rem, 5vw, 3.2rem);
       font-weight: 800; letter-spacing: -0.02em; margin-bottom: 14px;
       background: linear-gradient(120deg, #fff 20%, #93c5fd 60%, #c084fc 100%);
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
     }
-    .hero p { max-width: 680px; margin: 0 auto 28px; color: var(--muted); font-size: 1.08rem; }
+    .hero p { max-width: 700px; margin: 0 auto 26px; color: var(--muted); font-size: 1.05rem; }
     .cta-row { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
     .btn {
       display: inline-flex; align-items: center; gap: 8px;
-      padding: 12px 22px; border-radius: 12px; font-weight: 600; font-size: 0.95rem;
+      padding: 12px 22px; border-radius: 12px; font-weight: 600; font-size: 0.94rem;
       transition: transform 0.15s ease, opacity 0.15s ease;
     }
     .btn:hover { transform: translateY(-1px); text-decoration: none; }
@@ -78,23 +84,29 @@
       background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
       color: #fff; box-shadow: 0 10px 28px rgba(59, 130, 246, 0.3);
     }
-    .btn-secondary {
-      background: var(--surface-alt); color: var(--text); border: 1px solid var(--border);
+    .btn-secondary { background: var(--surface-alt); color: var(--text); border: 1px solid var(--border); }
+
+    .shots {
+      display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; margin-top: 38px;
     }
+    .shot {
+      width: 210px; height: 210px; border-radius: 50%; overflow: hidden;
+      border: 3px solid rgba(147, 197, 253, 0.25);
+      box-shadow: 0 14px 40px rgba(0, 0, 0, 0.55);
+      background: #000;
+    }
+    .shot img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
     section { padding: 48px 0; border-top: 1px solid var(--border); }
-    h2 { font-size: 1.65rem; margin-bottom: 10px; letter-spacing: -0.01em; }
-    .section-lead { color: var(--muted); margin-bottom: 28px; max-width: 720px; }
+    h2 { font-size: 1.62rem; margin-bottom: 10px; letter-spacing: -0.01em; }
+    .section-lead { color: var(--muted); margin-bottom: 26px; max-width: 740px; }
 
-    .grid {
-      display: grid; gap: 16px;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    }
+    .grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
     .card {
       background: var(--surface); border: 1px solid var(--border);
       border-radius: 16px; padding: 20px;
     }
-    .card h3 { font-size: 1.05rem; margin-bottom: 8px; color: #fff; }
+    .card h3 { font-size: 1.04rem; margin-bottom: 8px; color: #fff; }
     .card p { font-size: 0.92rem; color: var(--muted); }
 
     table {
@@ -128,7 +140,7 @@
       border-top: 1px solid var(--border);
       padding: 36px 0; text-align: center; color: var(--muted); font-size: 0.88rem;
     }
-    @media (max-width: 640px) {
+    @media (max-width: 720px) {
       .nav-links { display: none; }
     }
   </style>
@@ -141,160 +153,157 @@
         <span>WearOSignal</span>
       </div>
       <nav class="nav-links">
-        <a href="#features">Funciones</a>
-        <a href="#beta">Beta</a>
-        <a href="#architecture">Arquitectura</a>
-        <a href="#build">Compilación</a>
-        <a href="#privacy">Privacidad</a>
-        <a href="#license">Licencia</a>
+        <a href="#features" data-i18n="nav_features">Funciones</a>
+        <a href="#beta" data-i18n="nav_beta">Beta</a>
+        <a href="#architecture" data-i18n="nav_arch">Arquitectura</a>
+        <a href="#build" data-i18n="nav_build">Compilación</a>
+        <a href="#privacy" data-i18n="nav_privacy">Privacidad</a>
+        <a href="#license" data-i18n="nav_license">Licencia</a>
       </nav>
+      <div class="lang-bar" role="group" aria-label="Language">
+        <button class="lang-btn" data-lang="es">ES</button>
+        <button class="lang-btn" data-lang="en">EN</button>
+        <button class="lang-btn" data-lang="fr">FR</button>
+        <button class="lang-btn" data-lang="pt">PT</button>
+        <button class="lang-btn" data-lang="it">IT</button>
+      </div>
     </div>
   </header>
 
   <main class="container">
     <div class="hero">
       <img class="hero-icon" src="icon/icon.png" alt="Logo WearOSignal" />
-      <div><span class="badge">Wear OS 3+ · Galaxy Watch 4 / 5 / 6 / 7 / Ultra · Open Source AGPLv3</span></div>
+      <div><span class="badge" data-i18n="hero_badge">Wear OS 3+ · Galaxy Watch 4 / 5 / 6 / 7 / Ultra · 5 Idiomas · AGPLv3</span></div>
       <h1>WearOSignal</h1>
-      <p>
+      <p data-i18n="hero_desc">
         Cliente independiente de Signal diseñado específicamente para relojes Wear OS.
-        Lee tus chats, responde con notas de voz en vivo, emojis favoritos, respuestas rápidas y
+        Lee tus chats, ancla favoritos, responde con notas de voz en vivo, emojis favoritos, respuestas rápidas y
         visualiza fotos, stickers, GIFs animados y videos directo desde tu muñeca.
       </p>
       <div class="cta-row">
-        <a class="btn btn-primary" href="#beta">Unirme a la Beta</a>
-        <a class="btn btn-secondary" href="https://github.com/soycamiloypunto/wearosignal" target="_blank" rel="noopener">Código fuente en GitHub</a>
+        <a class="btn btn-primary" href="#beta" data-i18n="cta_beta">Unirme a la Beta</a>
+        <a class="btn btn-secondary" href="https://github.com/soycamiloypunto/wearosignal" target="_blank" rel="noopener" data-i18n="cta_github">Código fuente en GitHub</a>
         <a class="btn btn-secondary" href="https://x.com/criscamilotv" target="_blank" rel="noopener">𝕏 @criscamilotv</a>
+      </div>
+      <div class="shots">
+        <div class="shot"><img src="images/screenshot_1_chats.png" alt="WearOSignal Chats" /></div>
+        <div class="shot"><img src="images/screenshot_2_voice.png" alt="WearOSignal Voice & Chat" /></div>
+        <div class="shot"><img src="images/screenshot_3_settings.png" alt="WearOSignal Settings" /></div>
       </div>
     </div>
 
     <section id="features">
-      <h2>Funciones diseñadas para tu reloj</h2>
-      <p class="section-lead">Pensado para pantallas circulares, interacción rápida con una sola mano y consumo responsable de batería.</p>
+      <h2 data-i18n="feat_title">Funciones diseñadas para tu reloj</h2>
+      <p class="section-lead" data-i18n="feat_lead">Pensado para pantallas circulares, interacción rápida con una sola mano y consumo responsable de batería.</p>
       <div class="grid">
         <div class="card">
-          <h3>Menú principal en círculos</h3>
-          <p>Cuadrícula circular de 3 avatares por fila con fotos descifradas de contactos y grupos, más botones circulares de Sincronizar, Nuevo chat y Ajustes.</p>
+          <h3 data-i18n="f1_t">Lista de chats y hasta 3 anclados</h3>
+          <p data-i18n="f1_d">Tarjetas claras con avatar, último mensaje y soporte de bisel giratorio, separadas de los 3 botones circulares. Mantén presionado para anclar (máx. 3) o eliminar un chat.</p>
         </div>
         <div class="card">
-          <h3>Notas de voz con ondas dinámicas</h3>
-          <p>Grabación nativa en AAC/M4A con visualizador de 13 barras reactivas al micrófono en tiempo real, subida cifrada a Signal CDN V4 y reproducción directa en la burbuja.</p>
+          <h3 data-i18n="f2_t">Notas de voz con ondas en vivo</h3>
+          <p data-i18n="f2_d">Grabación AAC/M4A con visualizador dinámico de 13 barras reactivas al micrófono, subida cifrada a Signal CDN V4 y reproducción directa en la burbuja.</p>
         </div>
         <div class="card">
-          <h3>9 emojis favoritos editables</h3>
-          <p>Envía tus emojis más usados con un toque y personaliza cualquiera de los 9 espacios desde el botón <strong>＋</strong> usando el teclado de emojis del reloj.</p>
+          <h3 data-i18n="f3_t">9 emojis favoritos y 5 respuestas rápidas</h3>
+          <p data-i18n="f3_d">Envía tus emojis más usados o respuestas rápidas en un toque y personaliza todos los espacios directamente desde el reloj.</p>
         </div>
         <div class="card">
-          <h3>5 respuestas rápidas personalizables</h3>
-          <p>Desliza debajo de la barra <code>🎤 · 😊 · Aa</code> para enviar respuestas rápidas en un toque o edita las 5 frases a tu gusto.</p>
+          <h3 data-i18n="f4_t">Fotos, stickers, GIFs y videos</h3>
+          <p data-i18n="f4_d">Soporte completo para ver imágenes, stickers WebP, GIFs animados (ImageDecoder) y videos MP4 en pantalla completa.</p>
         </div>
         <div class="card">
-          <h3>Fotos, stickers, GIFs y videos</h3>
-          <p>Soporte completo para ver imágenes, stickers WebP, GIFs animados (<code>ImageDecoder</code> + <code>AnimatedImageDrawable</code>) y videos MP4 en pantalla completa.</p>
+          <h3 data-i18n="f5_t">Mensajes temporales y borrado sincronizado</h3>
+          <p data-i18n="f5_d">Purga automáticamente mensajes expirados según el temporizador de Signal y sincroniza eliminaciones ("Para mí", "Para todos" y borrar chat) con tu teléfono.</p>
         </div>
         <div class="card">
-          <h3>Español, inglés y privacidad</h3>
-          <p>Interfaz localizada, pantalla de bloqueo privada, Tile de chats recientes, Complication de no leídos y botón para desvincular y borrar todos los datos locales.</p>
+          <h3 data-i18n="f6_t">5 idiomas y ajustes Wear OS</h3>
+          <p data-i18n="f6_d">Español, Inglés, Francés, Portugués e Italiano automáticos; contactos "En Signal / Sin Signal", Tile, Complication, vaciar chats y desvincular reloj.</p>
         </div>
       </div>
     </section>
 
     <section id="beta">
-      <h2>Únete a la Beta (Wear OS)</h2>
-      <p class="section-lead">¿Tienes un Samsung Galaxy Watch 4/5/6/7/Ultra u otro reloj con Wear OS 3+? Únete al instante (acceso abierto sin espera) y ayúdanos a mejorar WearOSignal.</p>
+      <h2 data-i18n="beta_title">Únete a la Beta (Wear OS)</h2>
+      <p class="section-lead" data-i18n="beta_lead">¿Tienes un Samsung Galaxy Watch 4/5/6/7/Ultra u otro reloj con Wear OS 3+? Únete al instante (acceso abierto sin espera) y ayúdanos a mejorar WearOSignal.</p>
       <div class="grid">
         <div class="card">
-          <h3>1. Únete al grupo de testers</h3>
-          <p>Entra al grupo oficial de WearOSignal con tu cuenta de Google Play y pulsa <strong>Unirme al grupo</strong> (acceso inmediato).</p>
+          <h3 data-i18n="beta_s1_t">1. Únete al grupo de testers</h3>
+          <p data-i18n="beta_s1_d">Entra al grupo oficial de WearOSignal con tu cuenta de Google Play y pulsa Unirme al grupo (acceso inmediato).</p>
           <p style="margin-top: 12px;">
-            <a class="btn btn-primary" href="https://groups.google.com/g/wearosignal-testers/" target="_blank" rel="noopener">Unirme a la Beta</a>
+            <a class="btn btn-primary" href="https://groups.google.com/g/wearosignal-testers/" target="_blank" rel="noopener" data-i18n="cta_beta">Unirme a la Beta</a>
           </p>
         </div>
         <div class="card">
-          <h3>2. Instala desde Google Play</h3>
-          <p>Inmediatamente después de unirte al grupo, abre el enlace oficial de pruebas de Google Play, acepta ser verificador e instala WearOSignal directo en tu reloj.</p>
+          <h3 data-i18n="beta_s2_t">2. Instala desde Google Play</h3>
+          <p data-i18n="beta_s2_d">Inmediatamente después de unirte al grupo, abre el enlace oficial de pruebas de Google Play, acepta ser verificador e instala WearOSignal directo en tu reloj.</p>
           <p style="margin-top: 12px;">
-            <a class="btn btn-secondary" href="https://play.google.com/apps/testing/com.wearosignal.app" target="_blank" rel="noopener">Abrir en Google Play</a>
+            <a class="btn btn-secondary" href="https://play.google.com/apps/testing/com.wearosignal.app" target="_blank" rel="noopener" data-i18n="beta_play_btn">Abrir en Google Play</a>
           </p>
         </div>
       </div>
     </section>
 
     <section id="architecture">
-      <h2>Detalle técnico y seguridad</h2>
-      <p class="section-lead">Transparencia total sobre cómo se conecta WearOSignal, cómo cifra tus datos y por qué cumple con las políticas de Google Play.</p>
+      <h2 data-i18n="arch_title">Detalle técnico y seguridad</h2>
+      <p class="section-lead" data-i18n="arch_lead">Transparencia total sobre cómo se conecta WearOSignal, cómo cifra tus datos y por qué cumple con Google Play.</p>
       <table>
         <thead>
-          <tr><th>Área</th><th>Detalle técnico</th></tr>
+          <tr><th data-i18n="th_area">Área</th><th data-i18n="th_detail">Detalle técnico</th></tr>
         </thead>
         <tbody>
           <tr>
-            <td><strong>Protocolo Signal</strong></td>
-            <td>Opera como <em>dispositivo vinculado</em> mediante QR de aprovisionamiento usando <code>org.signal:libsignal-android:0.94.4</code> y <code>lib:libsignal-service</code>.</td>
+            <td><strong data-i18n="t1_k">Protocolo Signal</strong></td>
+            <td data-i18n="t1_v">Dispositivo vinculado por QR usando <code>org.signal:libsignal-android:0.94.4</code> y <code>lib:libsignal-service</code>.</td>
           </tr>
           <tr>
-            <td><strong>Servidores oficiales</strong></td>
-            <td>Conexión directa y exclusiva a <code>chat.signal.org</code>, <code>storage.signal.org</code>, <code>cdn/cdn2/cdn3.signal.org</code>, <code>cdsi.signal.org</code> y <code>svr2.signal.org</code> con el trust store oficial <code>whisper.store</code>.</td>
+            <td><strong data-i18n="t2_k">Servidores oficiales</strong></td>
+            <td data-i18n="t2_v">Conexión directa y exclusiva a <code>*.signal.org</code> validada con <code>whisper.store</code>. Cero servidores intermedios o rastreadores.</td>
           </tr>
           <tr>
-            <td><strong>Adjuntos CDN V4</strong></td>
-            <td>Solicitud <code>GET /v4/attachments/form/upload?uploadLength=&lt;ciphertextLength&gt;</code> con padding Signal (<code>PaddingInputStream</code> + <code>AttachmentCipherStreamUtil</code>) y subida cifrada vía <code>ResumableUploadSpec</code>.</td>
+            <td><strong data-i18n="t3_k">Cifrado local</strong></td>
+            <td data-i18n="t3_v">Credenciales y claves de identidad cifradas en reposo con <strong>Android Keystore AES-256-GCM</strong> (<code>KeystoreSecretBox.kt</code>).</td>
           </tr>
           <tr>
-            <td><strong>Cifrado local en reposo</strong></td>
-            <td>Contraseña y claves de identidad (<code>aci_identity</code>, <code>pni_identity</code>, <code>profile_key</code>) protegidas con <strong>Android Keystore AES-256-GCM</strong> (<code>KeystoreSecretBox.kt</code>).</td>
+            <td><strong data-i18n="t4_k">Compatibilidad</strong></td>
+            <td data-i18n="t4_v"><code>minSdk = 30</code> (Wear OS 3+), <code>targetSdk = 35</code>, <code>armeabi-v7a</code> y <code>arm64-v8a</code> (Galaxy Watch 4/5/6/7/Ultra, Pixel Watch).</td>
           </tr>
           <tr>
-            <td><strong>Compatibilidad Wear OS</strong></td>
-            <td><code>minSdk = 30</code> (Wear OS 3+), <code>targetSdk = 35</code>, <code>compileSdk = 36</code>. Binarios nativos para <code>armeabi-v7a</code> y <code>arm64-v8a</code> (Galaxy Watch 4, 5, 6, 7, Ultra, Pixel Watch).</td>
-          </tr>
-          <tr>
-            <td><strong>Cumplimiento Play Store</strong></td>
-            <td>Sin <code>USE_EXACT_ALARM</code> ni <code>SCHEDULE_EXACT_ALARM</code> (usa <code>setAndAllowWhileIdle</code> + <code>WorkManager</code>), minificación R8/ProGuard en <code>release</code> y controles de debug ocultos en producción.</td>
+            <td><strong data-i18n="t5_k">Idiomas</strong></td>
+            <td data-i18n="t5_v">Español, Inglés, Francés, Portugués e Italiano (adaptación automática al idioma del reloj).</td>
           </tr>
         </tbody>
       </table>
     </section>
 
     <section id="build">
-      <h2>Compilación desde código fuente</h2>
-      <p class="section-lead">La versión oficial lista para instalar con actualizaciones automáticas estará disponible en <strong>Google Play Store</strong>. Si deseas compilarla por tu cuenta desde el código abierto:</p>
-      <pre><code># Compilar desde fuente (requiere JDK 17+, Android SDK 36 y NDK 27.2.12479018)
-.\gradlew.bat :app:assembleDebug
-
-# Instalar en reloj Wear OS mediante ADB inalámbrico
-adb pair &lt;IP&gt;:&lt;PUERTO_EMPAREJAMIENTO&gt;
-adb connect &lt;IP&gt;:&lt;PUERTO&gt;
+      <h2 data-i18n="build_title">Compilación desde código fuente</h2>
+      <p class="section-lead" data-i18n="build_lead">La versión oficial lista para instalar estará disponible en Google Play Store. Si deseas compilarla tú mismo desde el código abierto:</p>
+      <pre><code>.\gradlew.bat :app:assembleDebug
+adb pair &lt;IP&gt;:&lt;PORT&gt;
+adb connect &lt;IP&gt;:&lt;PORT&gt;
 adb install -r --no-streaming app\build\outputs\apk\debug\app-debug.apk</code></pre>
     </section>
 
     <section id="privacy">
-      <h2>Política de Privacidad</h2>
-      <p class="section-lead">Última actualización: noviembre de 2026 · Desarrollador: <strong>Cristian Camilo</strong> (<a href="mailto:doblectabares@gmail.com">doblectabares@gmail.com</a>). <a href="privacy.html">Ver página independiente</a>.</p>
+      <h2 data-i18n="priv_title">Política de Privacidad</h2>
+      <p class="section-lead">
+        <span data-i18n="priv_meta">Desarrollador: Cristian Camilo · Contacto:</span>
+        <a href="mailto:doblectabares@gmail.com">doblectabares@gmail.com</a> ·
+        <a href="privacy.html" data-i18n="priv_page">Ver página independiente</a>
+      </p>
       <ul>
-        <li><strong>Sin servidores propios ni recolección de datos:</strong> WearOSignal no opera servidores propios, no recopila datos personales ni incluye analíticas, telemetría, publicidad o SDKs de rastreo (sin Firebase ni Crashlytics).</li>
-        <li><strong>Comunicación directa con Signal:</strong> todos los mensajes, reacciones y archivos multimedia se transmiten cifrados de extremo a extremo directamente entre tu reloj y los servidores oficiales de Signal (<code>*.signal.org</code>).</li>
-        <li><strong>Permisos y datos tratados localmente:</strong>
-          <ul>
-            <li><strong>Micrófono (<code>RECORD_AUDIO</code>):</strong> se utiliza únicamente cuando el usuario inicia manualmente la grabación de una nota de voz. El archivo temporal se borra inmediatamente tras el envío cifrado.</li>
-            <li><strong>Contactos (<code>READ_CONTACTS</code>):</strong> opcional; se usa solo al pulsar <em>Actualizar contactos</em> para consultar qué números de tu agenda están registrados en Signal mediante CDSI (enclave SGX). Los contactos nunca se envían al desarrollador.</li>
-            <li><strong>Notificaciones (<code>POST_NOTIFICATIONS</code>):</strong> se utiliza únicamente para mostrar avisos de mensajes entrantes en el reloj.</li>
-          </ul>
-        </li>
-        <li><strong>Seguridad, retención y eliminación de datos:</strong> las claves y credenciales locales se cifran con <strong>Android Keystore (AES-256-GCM)</strong>. La caché multimedia local se elimina automáticamente a los 7 días (límite de 64 MB). Puedes borrar el 100% de tus datos locales en cualquier momento desde <em>Ajustes → Desvincular reloj</em> o desinstalando la aplicación.</li>
-        <li><strong>Contacto y soporte:</strong> para consultas de privacidad o eliminación de datos, escribe a <a href="mailto:doblectabares@gmail.com">doblectabares@gmail.com</a>.</li>
+        <li data-i18n="p1">Sin servidores propios ni recolección de datos: sin analíticas, publicidad, Firebase ni Crashlytics.</li>
+        <li data-i18n="p2">Comunicación cifrada de extremo a extremo exclusivamente con servidores oficiales de Signal (*.signal.org).</li>
+        <li data-i18n="p3">Permisos mínimos: RECORD_AUDIO solo al grabar notas de voz; READ_CONTACTS opcional para descubrir contactos en Signal (CDSI/SGX).</li>
+        <li data-i18n="p4">Claves cifradas con Android Keystore (AES-256-GCM) y borrado total disponible desde Ajustes → Desvincular reloj.</li>
       </ul>
     </section>
 
     <section id="license">
-      <h2>Licencia y avisos legales</h2>
-      <p class="section-lead">Software libre publicado bajo <strong>GNU Affero General Public License v3.0 (AGPLv3)</strong>.</p>
-      <div class="notice">
-        <strong>Developed by Cristian Camilo.</strong><br />
-        WearOSignal es un cliente independiente y no oficial para Signal, no afiliado ni respaldado por Signal Messenger, LLC.
-        Todo el código fuente correspondiente está disponible gratuitamente en
-        <a href="https://github.com/soycamiloypunto/wearosignal">github.com/soycamiloypunto/wearosignal</a>
-        bajo los términos de la <a href="https://github.com/soycamiloypunto/wearosignal/blob/main/LICENSE">licencia GNU AGPLv3</a>.
+      <h2 data-i18n="lic_title">Licencia y avisos legales</h2>
+      <div class="notice" data-i18n="lic_body">
+        Developed by Cristian Camilo. WearOSignal es un cliente independiente y no oficial para Signal, no afiliado ni respaldado por Signal Messenger, LLC. Distribuido bajo licencia GNU AGPLv3 en github.com/soycamiloypunto/wearosignal.
       </div>
     </section>
   </main>
@@ -306,5 +315,191 @@ adb install -r --no-streaming app\build\outputs\apk\debug\app-debug.apk</code></
       <a href="https://x.com/criscamilotv" target="_blank" rel="noopener">𝕏 @criscamilotv</a>
     </div>
   </footer>
+
+  <script>
+    const T = {
+      es: {
+        nav_features: "Funciones", nav_beta: "Beta", nav_arch: "Arquitectura", nav_build: "Compilación", nav_privacy: "Privacidad", nav_license: "Licencia",
+        hero_badge: "Wear OS 3+ · Galaxy Watch 4 / 5 / 6 / 7 / Ultra · 5 Idiomas · AGPLv3",
+        hero_desc: "Cliente independiente de Signal diseñado específicamente para relojes Wear OS. Lee tus chats, ancla favoritos, responde con notas de voz en vivo, emojis favoritos, respuestas rápidas y visualiza fotos, stickers, GIFs animados y videos directo desde tu muñeca.",
+        cta_beta: "Unirme a la Beta", cta_github: "Código fuente en GitHub",
+        feat_title: "Funciones diseñadas para tu reloj", feat_lead: "Pensado para pantallas circulares, interacción rápida con una sola mano y consumo responsable de batería.",
+        f1_t: "Lista de chats y hasta 3 anclados", f1_d: "Tarjetas claras con avatar, último mensaje y bisel giratorio, separadas de los 3 botones circulares. Mantén presionado para anclar (máx. 3) o eliminar un chat.",
+        f2_t: "Notas de voz con ondas en vivo", f2_d: "Grabación AAC/M4A con visualizador dinámico de 13 barras reactivas al micrófono, subida cifrada a Signal CDN V4 y reproducción directa en la burbuja.",
+        f3_t: "9 emojis favoritos y 5 respuestas rápidas", f3_d: "Envía tus emojis más usados o respuestas rápidas en un toque y personaliza todos los espacios directamente desde el reloj.",
+        f4_t: "Fotos, stickers, GIFs y videos", f4_d: "Soporte completo para ver imágenes, stickers WebP, GIFs animados (ImageDecoder) y videos MP4 en pantalla completa.",
+        f5_t: "Mensajes temporales y borrado sincronizado", f5_d: "Purga automáticamente mensajes expirados según el temporizador de Signal y sincroniza eliminaciones (Para mí, Para todos y borrar chat) con tu teléfono.",
+        f6_t: "5 idiomas y ajustes Wear OS", f6_d: "Español, Inglés, Francés, Portugués e Italiano automáticos; contactos En Signal / Sin Signal, Tile, Complication, vaciar chats y desvincular reloj.",
+        beta_title: "Únete a la Beta (Wear OS)", beta_lead: "¿Tienes un Samsung Galaxy Watch 4/5/6/7/Ultra u otro reloj con Wear OS 3+? Únete al instante (acceso abierto sin espera) y ayúdanos a mejorar WearOSignal.",
+        beta_s1_t: "1. Únete al grupo de testers", beta_s1_d: "Entra al grupo oficial de WearOSignal con tu cuenta de Google Play y pulsa Unirme al grupo (acceso inmediato).",
+        beta_s2_t: "2. Instala desde Google Play", beta_s2_d: "Inmediatamente después de unirte al grupo, abre el enlace oficial de pruebas de Google Play, acepta ser verificador e instala WearOSignal directo en tu reloj.",
+        beta_play_btn: "Abrir en Google Play",
+        arch_title: "Detalle técnico y seguridad", arch_lead: "Transparencia total sobre cómo se conecta WearOSignal, cómo cifra tus datos y por qué cumple con Google Play.",
+        th_area: "Área", th_detail: "Detalle técnico",
+        t1_k: "Protocolo Signal", t1_v: "Dispositivo vinculado por QR usando libsignal-android 0.94.4 y libsignal-service.",
+        t2_k: "Servidores oficiales", t2_v: "Conexión directa y exclusiva a *.signal.org validada con whisper.store. Cero servidores intermedios o rastreadores.",
+        t3_k: "Cifrado local", t3_v: "Credenciales y claves de identidad cifradas en reposo con Android Keystore AES-256-GCM.",
+        t4_k: "Compatibilidad", t4_v: "minSdk 30 (Wear OS 3+), targetSdk 35, armeabi-v7a y arm64-v8a (Galaxy Watch 4/5/6/7/Ultra, Pixel Watch).",
+        t5_k: "Idiomas", t5_v: "Español, Inglés, Francés, Portugués e Italiano (adaptación automática al idioma del reloj).",
+        build_title: "Compilación desde código fuente", build_lead: "La versión oficial lista para instalar estará disponible en Google Play Store. Si deseas compilarla tú mismo desde el código abierto:",
+        priv_title: "Política de Privacidad", priv_meta: "Desarrollador: Cristian Camilo · Contacto:", priv_page: "Ver página independiente",
+        p1: "Sin servidores propios ni recolección de datos: sin analíticas, publicidad, Firebase ni Crashlytics.",
+        p2: "Comunicación cifrada de extremo a extremo exclusivamente con servidores oficiales de Signal (*.signal.org).",
+        p3: "Permisos mínimos: RECORD_AUDIO solo al grabar notas de voz; READ_CONTACTS opcional para descubrir contactos en Signal (CDSI/SGX).",
+        p4: "Claves cifradas con Android Keystore (AES-256-GCM) y borrado total disponible desde Ajustes → Desvincular reloj.",
+        lic_title: "Licencia y avisos legales",
+        lic_body: "Developed by Cristian Camilo. WearOSignal es un cliente independiente y no oficial para Signal, no afiliado ni respaldado por Signal Messenger, LLC. Distribuido bajo licencia GNU AGPLv3 en github.com/soycamiloypunto/wearosignal."
+      },
+      en: {
+        nav_features: "Features", nav_beta: "Beta", nav_arch: "Architecture", nav_build: "Build", nav_privacy: "Privacy", nav_license: "License",
+        hero_badge: "Wear OS 3+ · Galaxy Watch 4 / 5 / 6 / 7 / Ultra · 5 Languages · AGPLv3",
+        hero_desc: "Independent open-source Signal client built specifically for Wear OS smartwatches. Read chats, pin favorites, reply with live-waveform voice notes, favorite emojis, quick replies, and view photos, stickers, animated GIFs & videos right from your wrist.",
+        cta_beta: "Join the Beta", cta_github: "Source code on GitHub",
+        feat_title: "Built for your watch", feat_lead: "Designed for circular screens, fast one-handed replies, and battery-friendly operation.",
+        f1_t: "Chat list & up to 3 pinned chats", f1_d: "Clean chat cards with avatars, previews, and rotary bezel scrolling, clearly separated from the 3 circular action buttons. Long-press to pin (max 3) or delete.",
+        f2_t: "Voice notes with live waveform", f2_d: "AAC/M4A recording with a live 13-bar microphone visualizer, encrypted Signal CDN V4 upload, and in-bubble audio playback.",
+        f3_t: "9 favorite emojis & 5 quick replies", f3_d: "Send your top emojis or quick replies in one tap and customize every slot directly on the watch.",
+        f4_t: "Photos, stickers, GIFs & videos", f4_d: "Full viewing support for photos, WebP stickers, animated GIFs (ImageDecoder), and full-screen MP4 videos.",
+        f5_t: "Disappearing messages & synced deletes", f5_d: "Automatically purges expired messages matching your Signal timer and syncs Delete for me, Delete for all, and chat deletions with your phone.",
+        f6_t: "5 languages & Wear OS Settings", f6_d: "Automatic English, Spanish, French, Portuguese & Italian; On Signal / Not on Signal contacts, Tile, Complication, Clear chats & Unlink.",
+        beta_title: "Join the Beta (Wear OS)", beta_lead: "Own a Samsung Galaxy Watch 4/5/6/7/Ultra or Wear OS 3+ watch? Join instantly (open access, no approval wait) and help improve WearOSignal.",
+        beta_s1_t: "1. Join the testers group", beta_s1_d: "Open the official WearOSignal Google Group with your Google Play account and click Join group (instant access).",
+        beta_s2_t: "2. Install from Google Play", beta_s2_d: "Right after joining the group, open the official Google Play testing link, opt in as a tester, and install WearOSignal directly on your watch.",
+        beta_play_btn: "Open on Google Play",
+        arch_title: "Technical details & security", arch_lead: "Full transparency on how WearOSignal connects, encrypts your data, and complies with Google Play.",
+        th_area: "Area", th_detail: "Technical detail",
+        t1_k: "Signal Protocol", t1_v: "QR-linked secondary device powered by libsignal-android 0.94.4 and libsignal-service.",
+        t2_k: "Official servers", t2_v: "Direct encrypted connection exclusively to *.signal.org validated via whisper.store. Zero third-party servers or trackers.",
+        t3_k: "Local encryption", t3_v: "Credentials and identity keys encrypted at rest with Android Keystore AES-256-GCM.",
+        t4_k: "Compatibility", t4_v: "minSdk 30 (Wear OS 3+), targetSdk 35, armeabi-v7a & arm64-v8a (Galaxy Watch 4/5/6/7/Ultra, Pixel Watch).",
+        t5_k: "Languages", t5_v: "English, Spanish, French, Portuguese, and Italian (matches watch locale automatically).",
+        build_title: "Build from source", build_lead: "The official prebuilt version with automatic updates is distributed via Google Play Store. To compile from open source:",
+        priv_title: "Privacy Policy", priv_meta: "Developer: Cristian Camilo · Contact:", priv_page: "Standalone page",
+        p1: "No developer servers or data collection: zero analytics, ads, Firebase, or Crashlytics.",
+        p2: "End-to-end encrypted communication exclusively with official Signal servers (*.signal.org).",
+        p3: "Minimal permissions: RECORD_AUDIO only when recording a voice note; optional READ_CONTACTS for Signal CDSI/SGX discovery.",
+        p4: "Keys encrypted with Android Keystore (AES-256-GCM) and full local wipe via Settings → Unlink watch.",
+        lic_title: "License & legal notices",
+        lic_body: "Developed by Cristian Camilo. WearOSignal is an independent, unofficial client for Signal and is not affiliated with or endorsed by Signal Messenger, LLC. Licensed under GNU AGPLv3 at github.com/soycamiloypunto/wearosignal."
+      },
+      fr: {
+        nav_features: "Fonctions", nav_beta: "Bêta", nav_arch: "Architecture", nav_build: "Compiler", nav_privacy: "Confidentialité", nav_license: "Licence",
+        hero_badge: "Wear OS 3+ · Galaxy Watch 4 / 5 / 6 / 7 / Ultra · 5 Langues · AGPLv3",
+        hero_desc: "Client Signal indépendant et open source conçu pour Wear OS. Lisez vos discussions, épinglez vos favoris, répondez par messages vocaux avec onde en direct, emojis favoris, réponses rapides, et affichez photos, stickers, GIFs animés et vidéos.",
+        cta_beta: "Rejoindre la Bêta", cta_github: "Code source sur GitHub",
+        feat_title: "Conçu pour votre montre", feat_lead: "Pensé pour les écrans ronds, une utilisation rapide à une main et une autonomie maîtrisée.",
+        f1_t: "Liste de discussions et 3 épinglées", f1_d: "Cartes claires avec avatar, aperçu et défilement par couronne, séparées des 3 boutons ronds. Appui long pour épingler (max 3) ou supprimer.",
+        f2_t: "Vocaux avec onde audio en direct", f2_d: "Enregistrement AAC/M4A avec 13 barres réactives au micro, envoi chiffré Signal CDN V4 et lecture directe dans la bulle.",
+        f3_t: "9 emojis favoris et 5 réponses rapides", f3_d: "Envoyez vos emojis ou réponses rapides en un toucher et personnalisez chaque emplacement sur la montre.",
+        f4_t: "Photos, stickers, GIFs et vidéos", f4_d: "Affichage complet des photos, stickers WebP, GIFs animés (ImageDecoder) et vidéos MP4 en plein écran.",
+        f5_t: "Messages éphémères et suppressions synchronisées", f5_d: "Efface automatiquement les messages expirés et synchronise les suppressions (Pour moi, Pour tous, discussion) avec votre téléphone.",
+        f6_t: "5 langues et paramètres Wear OS", f6_d: "Français, Anglais, Espagnol, Portugais et Italien automatiques ; contacts Sur Signal / Sans Signal, Tuile, Complication et dissociation.",
+        beta_title: "Rejoindre la Bêta (Wear OS)", beta_lead: "Vous avez une Samsung Galaxy Watch 4/5/6/7/Ultra ou une montre Wear OS 3+ ? Accès immédiat sans attente pour tester WearOSignal.",
+        beta_s1_t: "1. Rejoignez le groupe de testeurs", beta_s1_d: "Ouvrez le Google Group officiel WearOSignal avec votre compte Google Play et cliquez sur Rejoindre (accès immédiat).",
+        beta_s2_t: "2. Installez depuis Google Play", beta_s2_d: "Juste après avoir rejoint le groupe, ouvrez le lien Google Play, acceptez de devenir testeur et installez WearOSignal sur votre montre.",
+        beta_play_btn: "Ouvrir dans Google Play",
+        arch_title: "Détails techniques et sécurité", arch_lead: "Transparence totale sur le fonctionnement, le chiffrement et la conformité Google Play.",
+        th_area: "Domaine", th_detail: "Détail technique",
+        t1_k: "Protocole Signal", t1_v: "Appareil secondaire associé par QR via libsignal-android 0.94.4 et libsignal-service.",
+        t2_k: "Serveurs officiels", t2_v: "Connexion directe exclusivement vers *.signal.org validée par whisper.store. Aucun serveur tiers ni traceur.",
+        t3_k: "Chiffrement local", t3_v: "Identifiants et clés chiffrés au repos via Android Keystore AES-256-GCM.",
+        t4_k: "Compatibilité", t4_v: "minSdk 30 (Wear OS 3+), targetSdk 35, armeabi-v7a et arm64-v8a (Galaxy Watch 4/5/6/7/Ultra, Pixel Watch).",
+        t5_k: "Langues", t5_v: "Français, Anglais, Espagnol, Portugais et Italien (automatique selon la montre).",
+        build_title: "Compiler depuis les sources", build_lead: "La version prête à installer est distribuée sur Google Play Store. Pour compiler depuis le code libre :",
+        priv_title: "Politique de confidentialité", priv_meta: "Développeur : Cristian Camilo · Contact :", priv_page: "Page dédiée",
+        p1: "Aucun serveur propre ni collecte de données : zéro analytique, publicité, Firebase ou Crashlytics.",
+        p2: "Communication chiffrée de bout en bout uniquement avec les serveurs officiels de Signal (*.signal.org).",
+        p3: "Permissions minimales : RECORD_AUDIO uniquement lors d'un vocal ; READ_CONTACTS optionnel pour CDSI/SGX.",
+        p4: "Clés chiffrées par Android Keystore (AES-256-GCM) et effacement complet via Paramètres → Dissocier la montre.",
+        lic_title: "Licence et mentions légales",
+        lic_body: "Developed by Cristian Camilo. WearOSignal est un client indépendant et non officiel pour Signal, non affilié à Signal Messenger, LLC. Sous licence GNU AGPLv3 sur github.com/soycamiloypunto/wearosignal."
+      },
+      pt: {
+        nav_features: "Recursos", nav_beta: "Beta", nav_arch: "Arquitetura", nav_build: "Compilar", nav_privacy: "Privacidade", nav_license: "Licença",
+        hero_badge: "Wear OS 3+ · Galaxy Watch 4 / 5 / 6 / 7 / Ultra · 5 Idiomas · AGPLv3",
+        hero_desc: "Cliente independente e open source do Signal feito para Wear OS. Leia conversas, fixe favoritas, responda com áudios de onda ao vivo, emojis favoritos, respostas rápidas e veja fotos, figurinhas, GIFs animados e vídeos no pulso.",
+        cta_beta: "Entrar na Beta", cta_github: "Código-fonte no GitHub",
+        feat_title: "Feito para o seu relógio", feat_lead: "Projetado para telas circulares, uso rápido com uma mão e baixo consumo de bateria.",
+        f1_t: "Lista de conversas e até 3 fixadas", f1_d: "Cartões claros com avatar, prévia e rolagem pela coroa, separados dos 3 botões circulares. Pressione e segure para fixar (máx. 3) ou excluir.",
+        f2_t: "Áudios com ondas ao vivo", f2_d: "Gravação AAC/M4A com 13 barras reativas ao microfone, envio criptografado Signal CDN V4 e reprodução direta no balão.",
+        f3_t: "9 emojis favoritos e 5 respostas rápidas", f3_d: "Envie seus emojis ou respostas rápidas com um toque e personalize todos os espaços no próprio relógio.",
+        f4_t: "Fotos, figurinhas, GIFs e vídeos", f4_d: "Visualização completa de fotos, figurinhas WebP, GIFs animados (ImageDecoder) e vídeos MP4 em tela cheia.",
+        f5_t: "Mensagens temporárias e exclusão sincronizada", f5_d: "Remove automaticamente mensagens expiradas e sincroniza exclusões (Para mim, Para todos e excluir chat) com seu celular.",
+        f6_t: "5 idiomas e configurações Wear OS", f6_d: "Português, Espanhol, Inglês, Francês e Italiano automáticos; contatos No Signal / Sem Signal, Bloco, Complicação e desvincular.",
+        beta_title: "Entre na Beta (Wear OS)", beta_lead: "Tem um Samsung Galaxy Watch 4/5/6/7/Ultra ou relógio Wear OS 3+? Acesso aberto imediato para testar o WearOSignal.",
+        beta_s1_t: "1. Entre no grupo de testadores", beta_s1_d: "Acesse o Google Group oficial do WearOSignal com sua conta Google Play e clique em Participar (acesso imediato).",
+        beta_s2_t: "2. Instale pelo Google Play", beta_s2_d: "Logo após entrar no grupo, abra o link oficial de testes do Google Play, aceite ser testador e instale o WearOSignal no relógio.",
+        beta_play_btn: "Abrir no Google Play",
+        arch_title: "Detalhes técnicos e segurança", arch_lead: "Transparência total sobre conexão, criptografia e conformidade com o Google Play.",
+        th_area: "Área", th_detail: "Detalhe técnico",
+        t1_k: "Protocolo Signal", t1_v: "Dispositivo secundário via QR usando libsignal-android 0.94.4 e libsignal-service.",
+        t2_k: "Servidores oficiais", t2_v: "Conexão direta exclusivamente com *.signal.org validada via whisper.store. Sem servidores intermediários ou rastreadores.",
+        t3_k: "Criptografia local", t3_v: "Credenciais e chaves criptografadas em repouso com Android Keystore AES-256-GCM.",
+        t4_k: "Compatibilidade", t4_v: "minSdk 30 (Wear OS 3+), targetSdk 35, armeabi-v7a e arm64-v8a (Galaxy Watch 4/5/6/7/Ultra, Pixel Watch).",
+        t5_k: "Idiomas", t5_v: "Português, Espanhol, Inglês, Francês e Italiano (automático conforme o relógio).",
+        build_title: "Compilar do código-fonte", build_lead: "A versão oficial pronta para instalar será distribuída na Google Play Store. Para compilar do código aberto:",
+        priv_title: "Política de Privacidade", priv_meta: "Desenvolvedor: Cristian Camilo · Contato:", priv_page: "Página dedicada",
+        p1: "Sem servidores próprios nem coleta de dados: sem anúncios, analytics, Firebase ou Crashlytics.",
+        p2: "Comunicação criptografada de ponta a ponta apenas com servidores oficiais do Signal (*.signal.org).",
+        p3: "Permissões mínimas: RECORD_AUDIO só ao gravar áudio; READ_CONTACTS opcional para descoberta CDSI/SGX.",
+        p4: "Chaves protegidas por Android Keystore (AES-256-GCM) e limpeza total em Configurações → Desvincular relógio.",
+        lic_title: "Licença e avisos legais",
+        lic_body: "Developed by Cristian Camilo. O WearOSignal é um cliente independente e não oficial para o Signal, não afiliado à Signal Messenger, LLC. Licenciado sob GNU AGPLv3 em github.com/soycamiloypunto/wearosignal."
+      },
+      it: {
+        nav_features: "Funzioni", nav_beta: "Beta", nav_arch: "Architettura", nav_build: "Compila", nav_privacy: "Privacy", nav_license: "Licenza",
+        hero_badge: "Wear OS 3+ · Galaxy Watch 4 / 5 / 6 / 7 / Ultra · 5 Lingue · AGPLv3",
+        hero_desc: "Client Signal indipendente e open source progettato per Wear OS. Leggi le chat, fissa le preferite, rispondi con note vocali con onde live, emoji preferite, risposte rapide e guarda foto, sticker, GIF animate e video dal polso.",
+        cta_beta: "Unisciti alla Beta", cta_github: "Codice sorgente su GitHub",
+        feat_title: "Pensato per il tuo orologio", feat_lead: "Ottimizzato per schermi rotondi, risposte rapide con una mano e consumi ridotti.",
+        f1_t: "Lista chat e fino a 3 fissate", f1_d: "Schede chiare con avatar, anteprima e ghiera girevole, separate dai 3 pulsanti circolari. Tieni premuto per fissare (max 3) o eliminare.",
+        f2_t: "Note vocali con onde dal vivo", f2_d: "Registrazione AAC/M4A con 13 barre reattive al microfono, invio cifrato Signal CDN V4 e riproduzione nella bolla.",
+        f3_t: "9 emoji preferite e 5 risposte rapide", f3_d: "Invia emoji o risposte rapide con un tocco e personalizza ogni slot direttamente sull'orologio.",
+        f4_t: "Foto, sticker, GIF e video", f4_d: "Supporto completo per foto, sticker WebP, GIF animate (ImageDecoder) e video MP4 a schermo intero.",
+        f5_t: "Messaggi a scomparsa ed eliminazioni sincronizzate", f5_d: "Elimina automaticamente i messaggi scaduti e sincronizza le eliminazioni (Per me, Per tutti, elimina chat) con il telefono.",
+        f6_t: "5 lingue e impostazioni Wear OS", f6_d: "Italiano, Inglese, Spagnolo, Francese e Portoghese automatici; contatti Su Signal / Senza Signal, Scheda, Complicazione e scollega.",
+        beta_title: "Unisciti alla Beta (Wear OS)", beta_lead: "Hai un Samsung Galaxy Watch 4/5/6/7/Ultra o un orologio Wear OS 3+? Accesso aperto immediato per provare WearOSignal.",
+        beta_s1_t: "1. Entra nel gruppo tester", beta_s1_d: "Apri il Google Group ufficiale di WearOSignal con il tuo account Google Play e clicca Partecipa (accesso immediato).",
+        beta_s2_t: "2. Installa da Google Play", beta_s2_d: "Subito dopo l'iscrizione al gruppo, apri il link di test Google Play, diventa tester e installa WearOSignal sull'orologio.",
+        beta_play_btn: "Apri su Google Play",
+        arch_title: "Dettagli tecnici e sicurezza", arch_lead: "Massima trasparenza su connessione, cifratura e conformità Google Play.",
+        th_area: "Area", th_detail: "Dettaglio tecnico",
+        t1_k: "Protocollo Signal", t1_v: "Dispositivo collegato via QR con libsignal-android 0.94.4 e libsignal-service.",
+        t2_k: "Server ufficiali", t2_v: "Connessione diretta solo verso *.signal.org validata con whisper.store. Zero server terzi o tracker.",
+        t3_k: "Cifratura locale", t3_v: "Credenziali e chiavi cifrate localmente con Android Keystore AES-256-GCM.",
+        t4_k: "Compatibilità", t4_v: "minSdk 30 (Wear OS 3+), targetSdk 35, armeabi-v7a e arm64-v8a (Galaxy Watch 4/5/6/7/Ultra, Pixel Watch).",
+        t5_k: "Lingue", t5_v: "Italiano, Inglese, Spagnolo, Francese e Portoghese (automatico in base all'orologio).",
+        build_title: "Compilazione dal sorgente", build_lead: "La versione ufficiale pronta all'uso sarà su Google Play Store. Per compilare dal codice sorgente:",
+        priv_title: "Informativa sulla Privacy", priv_meta: "Sviluppatore: Cristian Camilo · Contatto:", priv_page: "Pagina dedicata",
+        p1: "Nessun server proprio né raccolta dati: zero analytics, pubblicità, Firebase o Crashlytics.",
+        p2: "Comunicazione cifrata end-to-end esclusivamente con i server ufficiali Signal (*.signal.org).",
+        p3: "Permessi minimi: RECORD_AUDIO solo per le note vocali; READ_CONTACTS opzionale per CDSI/SGX.",
+        p4: "Chiavi protette con Android Keystore (AES-256-GCM) e cancellazione completa da Impostazioni → Scollega orologio.",
+        lic_title: "Licenza e note legali",
+        lic_body: "Developed by Cristian Camilo. WearOSignal è un client indipendente e non ufficiale per Signal, non affiliato a Signal Messenger, LLC. Licenza GNU AGPLv3 su github.com/soycamiloypunto/wearosignal."
+      }
+    };
+
+    function applyLang(lang) {
+      const dict = T[lang] || T.es;
+      document.documentElement.lang = lang;
+      document.querySelectorAll("[data-i18n]").forEach(el => {
+        const key = el.getAttribute("data-i18n");
+        if (dict[key]) el.textContent = dict[key];
+      });
+      document.querySelectorAll(".lang-btn").forEach(btn => {
+        btn.classList.toggle("active", btn.getAttribute("data-lang") === lang);
+      });
+      try { localStorage.setItem("wearosignal_lang", lang); } catch (_) {}
+    }
+
+    document.querySelectorAll(".lang-btn").forEach(btn => {
+      btn.addEventListener("click", () => applyLang(btn.getAttribute("data-lang")));
+    });
+
+    const saved = (() => { try { return localStorage.getItem("wearosignal_lang"); } catch (_) { return null; } })();
+    const browserLang = (navigator.language || "es").slice(0, 2).toLowerCase();
+    applyLang(saved && T[saved] ? saved : (T[browserLang] ? browserLang : "es"));
+  </script>
 </body>
 </html>

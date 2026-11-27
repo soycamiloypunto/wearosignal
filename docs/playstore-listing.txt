@@ -1,0 +1,198 @@
+====================================================================
+WEAROSIGNAL — FICHA DE GOOGLE PLAY STORE (5 IDIOMAS: ES, EN, FR, PT, IT)
+Paquete: com.wearosignal.app
+Política de privacidad: https://soycamiloypunto.github.io/wearosignal/privacy.html
+Sitio web / Código fuente (AGPLv3): https://soycamiloypunto.github.io/wearosignal/
+Contacto: doblectabares@gmail.com
+====================================================================
+
+--------------------------------------------------------------------
+ESPAÑOL (es-419 / es-ES)
+--------------------------------------------------------------------
+
+[TÍTULO DE LA APP] (máx. 30 caracteres — 28 usados)
+WearOSignal — Wear OS Client
+
+[DESCRIPCIÓN CORTA] (máx. 80 caracteres — 76 usados)
+Cliente independiente de Signal para Wear OS: chats, audios, emojis y media.
+
+[DESCRIPCIÓN LARGA] (máx. 4000 caracteres)
+WearOSignal es un cliente independiente y de código abierto de Signal diseñado específicamente para relojes inteligentes Wear OS (compatible desde Samsung Galaxy Watch 4 en adelante y cualquier reloj con Wear OS 3+).
+
+Vincula tu reloj como un dispositivo secundario mediante código QR (igual que Signal Desktop) para leer y responder tus conversaciones directamente desde tu muñeca, incluso cuando tu teléfono no está cerca.
+
+CARACTERÍSTICAS PRINCIPALES
+• Lista de chats clara y rápida: navega tus conversaciones 1:1 y grupos con fotos de perfil descifradas, vista previa del último mensaje y soporte de bisel giratorio / corona.
+• Ancla tus favoritos: fija hasta 3 chats importantes en la parte superior de la lista con una pulsación larga.
+• Barra de respuesta rápida (3 botones):
+  - Notas de voz: graba audios AAC/M4A con ondas dinámicas en tiempo real y escúchalos directamente en el reloj.
+  - 9 emojis favoritos personalizables: envía tus emojis más usados con un toque y edita cualquiera de los 9 espacios.
+  - Texto y dictado (Aa): usa el teclado nativo o dictado por voz de Wear OS.
+• 5 respuestas rápidas editables: desliza debajo de la barra de respuesta para contestar en un segundo con tus frases personalizadas.
+• Multimedia completa: visualiza fotos, stickers WebP, GIFs animados, videos MP4 y reproduce notas de voz directamente en tu reloj.
+• Mensajes temporales y eliminaciones sincronizadas: respeta automáticamente los tiempos de expiración de Signal y sincroniza eliminaciones ("Para mí", "Para todos" y borrado de chat) con tu teléfono.
+• Gestión de contactos: encuentra fácilmente qué contactos de tu reloj usan Signal (secciones "En Signal" y "Sin Signal").
+• Ajustes modernos para Wear OS: notificaciones configurables (1, 5 o 15 min), confirmaciones de lectura, privacidad en pantalla de bloqueo, vaciar chats y desvincular reloj.
+• Tile y Complication: consulta tus chats recientes y mensajes sin leer desde la carátula.
+• Multidioma automático: Español, Inglés, Francés, Portugués e Italiano.
+
+PRIVACIDAD Y SEGURIDAD
+• Conexión directa y cifrada de extremo a extremo exclusivamente con los servidores oficiales de Signal (*.signal.org).
+• Sin servidores propios, sin publicidad, sin telemetría ni rastreadores.
+• Credenciales y claves de identidad cifradas en reposo mediante Android Keystore (AES-256-GCM).
+• Software libre bajo licencia GNU AGPLv3. Código fuente público en: https://github.com/soycamiloypunto/wearosignal
+
+AVISO IMPORTANTE
+WearOSignal es un cliente independiente y no oficial para Signal, no afiliado ni respaldado por Signal Messenger, LLC. Requiere una cuenta activa de Signal en tu teléfono para vincular el reloj como dispositivo secundario. Al vincular, selecciona "No transferir mensajes" si Signal lo pregunta.
+
+--------------------------------------------------------------------
+ENGLISH (en-US)
+--------------------------------------------------------------------
+
+[APP TITLE] (max 30 chars — 28 used)
+WearOSignal — Wear OS Client
+
+[SHORT DESCRIPTION] (max 80 chars — 73 used)
+Unofficial Signal client for Wear OS: chats, voice notes, emojis & media.
+
+[FULL DESCRIPTION] (max 4000 chars)
+WearOSignal is an independent, open-source Signal client built specifically for Wear OS smartwatches (compatible with Samsung Galaxy Watch 4 and newer, Pixel Watch, and Wear OS 3+ devices).
+
+Link your watch as a secondary device via QR code (just like Signal Desktop) to read and reply to your conversations directly from your wrist — even when your phone stays behind.
+
+KEY FEATURES
+• Clean chat list & pinned chats: browse 1:1 and group conversations with decrypted contact/group photos, message previews, rotary bezel/crown scrolling, and pin up to 3 favorite chats to the top.
+• 3-button composer bar:
+  - Voice notes: record AAC/M4A voice messages with a live microphone waveform and play received/sent audio right on your watch.
+  - 9 customizable favorite emojis: send with one tap and customize all 9 slots anytime.
+  - Text & voice dictation (Aa): reply using Wear OS keyboard or speech-to-text.
+• 5 customizable quick replies: scroll below the composer bar to send your favorite replies in one tap.
+• Full media viewing: view photos, WebP stickers, animated GIFs, MP4 videos, and play voice notes natively on your watch.
+• Disappearing messages & synced deletions: automatically purges expired messages matching your Signal chat timer and syncs "Delete for me", "Delete for all", and chat deletions with your phone.
+• Smart contacts picker: clearly separates watch contacts into "On Signal" and "Not on Signal".
+• Modern Wear OS Settings: interactive checkboxes for notifications (1/5/15 min), read receipts, private lock screen, clear local chats, and one-tap unlink.
+• Tile & Complication: check recent chats and unread count right from your watch face.
+• 5 languages supported automatically: English, Spanish, French, Portuguese, and Italian.
+
+PRIVACY & SECURITY
+• Direct end-to-end encrypted connection exclusively to official Signal servers (*.signal.org).
+• Zero intermediary servers, zero ads, zero analytics or trackers.
+• Local account credentials and identity keys encrypted at rest with Android Keystore (AES-256-GCM).
+• Open-source under GNU AGPLv3: https://github.com/soycamiloypunto/wearosignal
+
+DISCLAIMER
+WearOSignal is an independent, unofficial client for Signal and is not affiliated with or endorsed by Signal Messenger, LLC. An active Signal account on your phone is required to link your watch. Choose "Don't transfer messages" if prompted during linking.
+
+--------------------------------------------------------------------
+FRANÇAIS (fr-FR / fr-CA)
+--------------------------------------------------------------------
+
+[TITRE DE L'APPLICATION] (max 30 car. — 28 utilisés)
+WearOSignal — Client Wear OS
+
+[DESCRIPTION COURTE] (max 80 car. — 74 utilisés)
+Client Signal non officiel pour Wear OS : chats, vocaux, emojis et médias.
+
+[DESCRIPTION COMPLÈTE] (max 4000 car.)
+WearOSignal est un client Signal indépendant et open source conçu spécialement pour les montres connectées Wear OS (compatible dès la Samsung Galaxy Watch 4, Pixel Watch et toute montre sous Wear OS 3+).
+
+Associez votre montre comme appareil secondaire via code QR (comme Signal Desktop) pour lire et répondre à vos conversations directement depuis votre poignet, même sans votre téléphone.
+
+FONCTIONNALITÉS PRINCIPALES
+• Liste de discussions et épinglage : parcourez vos discussions 1:1 et groupes avec photos déchiffrées, aperçu du dernier message, défilement par lunette/couronne et jusqu'à 3 discussions épinglées en haut.
+• Barre de réponse à 3 boutons :
+  - Messages vocaux : enregistrez des vocaux AAC/M4A avec onde audio dynamique en temps réel et écoutez-les directement sur la montre.
+  - 9 emojis favoris personnalisables : envoyez vos emojis préférés en un geste et modifiez chacun des 9 emplacements.
+  - Texte et dictée (Aa) : utilisez le clavier natif ou la dictée vocale Wear OS.
+• 5 réponses rapides modifiables : faites défiler sous la barre de réponse pour envoyer vos phrases personnalisées en un toucher.
+• Multimédia complet : affichez photos, stickers WebP, GIFs animés, vidéos MP4 et écoutez les notes vocales directement sur votre montre.
+• Messages éphémères et suppressions synchronisées : supprime automatiquement les messages expirés selon le minuteur Signal et synchronise les suppressions (« Pour moi », « Pour tous » et suppression de discussion) avec votre téléphone.
+• Contacts intelligents : sépare clairement vos contacts en « Sur Signal » et « Sans Signal ».
+• Paramètres Wear OS modernes : cases à cocher interactives pour notifications (1/5/15 min), confirmations de lecture, écran verrouillé privé, vider les discussions et dissocier la montre.
+• Tuile (Tile) et Complication : accédez aux discussions récentes et au compteur de non lus depuis le cadran.
+• 5 langues prises en charge automatiquement : français, anglais, espagnol, portugais et italien.
+
+CONFIDENTIALITÉ ET SÉCURITÉ
+• Connexion directe chiffrée de bout en bout exclusivement avec les serveurs officiels de Signal (*.signal.org).
+• Aucun serveur intermédiaire, aucune publicité, aucune télémétrie ni traceur.
+• Identifiants et clés chiffrés au repos via Android Keystore (AES-256-GCM).
+• Logiciel libre sous licence GNU AGPLv3 : https://github.com/soycamiloypunto/wearosignal
+
+AVERTISSEMENT
+WearOSignal est un client indépendant et non officiel pour Signal, non affilié ni approuvé par Signal Messenger, LLC. Un compte Signal actif sur votre téléphone est requis pour associer la montre. Choisissez « Ne pas transférer les messages » si Signal vous le propose lors de l'association.
+
+--------------------------------------------------------------------
+PORTUGUÊS (pt-BR / pt-PT)
+--------------------------------------------------------------------
+
+[TÍTULO DO APP] (máx. 30 car. — 29 usados)
+WearOSignal — Cliente Wear OS
+
+[DESCRIÇÃO CURTA] (máx. 80 car. — 74 usados)
+Cliente não oficial do Signal para Wear OS: chats, áudios, emojis e mídia.
+
+[DESCRIÇÃO COMPLETA] (máx. 4000 car.)
+O WearOSignal é um cliente independente e de código aberto do Signal criado especialmente para smartwatches Wear OS (compatível a partir do Samsung Galaxy Watch 4, Pixel Watch e qualquer relógio com Wear OS 3+).
+
+Vincule seu relógio como dispositivo secundário via código QR (como o Signal Desktop) para ler e responder suas conversas direto do pulso, mesmo quando o celular não estiver por perto.
+
+PRINCIPAIS RECURSOS
+• Lista de conversas e fixação: navegue por chats 1:1 e grupos com fotos descriptografadas, prévia da última mensagem, rolagem pela coroa/bisel e até 3 conversas fixadas no topo.
+• Barra de resposta com 3 botões:
+  - Mensagens de voz: grave áudios AAC/M4A com ondas dinâmicas em tempo real e reproduza áudios recebidos e enviados direto no relógio.
+  - 9 emojis favoritos personalizáveis: envie seus emojis mais usados com um toque e edite todos os 9 espaços.
+  - Texto e ditado (Aa): use o teclado nativo ou ditado por voz do Wear OS.
+• 5 respostas rápidas editáveis: deslize abaixo da barra de resposta para enviar suas frases favoritas em um segundo.
+• Mídia completa: visualize fotos, figurinhas WebP, GIFs animados, vídeos MP4 e ouça notas de voz diretamente no relógio.
+• Mensagens temporárias e exclusões sincronizadas: apaga automaticamente mensagens expiradas conforme o temporizador do Signal e sincroniza exclusões ("Para mim", "Para todos" e excluir conversa) com seu celular.
+• Contatos organizados: separa claramente seus contatos em "No Signal" e "Sem Signal".
+• Configurações modernas para Wear OS: caixas de seleção interativas para notificações (1/5/15 min), recibos de leitura, bloqueio privado, limpar conversas e desvincular relógio.
+• Bloco (Tile) e Complicação: acompanhe conversas recentes e não lidas direto no mostrador.
+• 5 idiomas automáticos: português, espanhol, inglês, francês e italiano.
+
+PRIVACIDADE E SEGURANÇA
+• Conexão direta com criptografia de ponta a ponta exclusivamente com os servidores oficiais do Signal (*.signal.org).
+• Sem servidores próprios, sem anúncios, sem telemetria nem rastreadores.
+• Credenciais e chaves protegidas em repouso com Android Keystore (AES-256-GCM).
+• Software livre sob licença GNU AGPLv3: https://github.com/soycamiloypunto/wearosignal
+
+AVISO IMPORTANTE
+O WearOSignal é um cliente independente e não oficial para o Signal, não afiliado nem endossado pela Signal Messenger, LLC. É necessária uma conta ativa do Signal no celular para vincular o relógio. Ao vincular, escolha "Não transferir mensagens" se solicitado.
+
+--------------------------------------------------------------------
+ITALIANO (it-IT)
+--------------------------------------------------------------------
+
+[TITOLO DELL'APP] (max 30 car. — 28 usati)
+WearOSignal — Client Wear OS
+
+[DESCRIZIONE BREVE] (max 80 car. — 72 usati)
+Client Signal non ufficiale per Wear OS: chat, audio, emoji e contenuti.
+
+[DESCRIZIONE COMPLETA] (max 4000 car.)
+WearOSignal è un client Signal indipendente e open source progettato appositamente per smartwatch Wear OS (compatibile da Samsung Galaxy Watch 4 in poi, Pixel Watch e qualsiasi orologio Wear OS 3+).
+
+Collega il tuo orologio come dispositivo secondario tramite codice QR (come Signal Desktop) per leggere e rispondere alle tue chat direttamente dal polso, anche quando il telefono non è con te.
+
+FUNZIONALITÀ PRINCIPALI
+• Lista chat e fissaggio: esplora conversazioni 1:1 e gruppi con foto decifrate, anteprima dell'ultimo messaggio, scorrimento con ghiera/corona e fino a 3 chat fissate in alto.
+• Barra di risposta a 3 pulsanti:
+  - Note vocali: registra messaggi vocali AAC/M4A con onde audio dinamiche in tempo reale e ascoltali direttamente sull'orologio.
+  - 9 emoji preferite personalizzabili: invia le tue emoji più usate con un tocco e modifica tutti e 9 gli slot.
+  - Testo e dettatura (Aa): rispondi con la tastiera nativa o la dettatura vocale di Wear OS.
+• 5 risposte rapide modificabili: scorri sotto la barra di risposta per inviare le tue frasi personalizzate in un attimo.
+• Supporto multimediale completo: visualizza foto, sticker WebP, GIF animate, video MP4 e riproduci note vocali direttamente sull'orologio.
+• Messaggi a scomparsa ed eliminazioni sincronizzate: elimina automaticamente i messaggi scaduti secondo il timer di Signal e sincronizza le eliminazioni ("Per me", "Per tutti" ed elimina chat) con il tuo telefono.
+• Rubrica intelligente: separa chiaramente i contatti dell'orologio in "Su Signal" e "Senza Signal".
+• Impostazioni Wear OS moderne: caselle interattive per notifiche (1/5/15 min), conferme di lettura, blocco privato, svuota chat e scollega orologio.
+• Scheda (Tile) e Complicazione: controlla chat recenti e messaggi non letti direttamente dal quadrante.
+• 5 lingue automatiche: italiano, inglese, spagnolo, francese e portoghese.
+
+PRIVACY E SICUREZZA
+• Connessione diretta cifrata end-to-end esclusivamente verso i server ufficiali di Signal (*.signal.org).
+• Nessun server intermedio, nessuna pubblicità, nessuna telemetria o tracker.
+• Credenziali e chiavi cifrate localmente con Android Keystore (AES-256-GCM).
+• Software libero con licenza GNU AGPLv3: https://github.com/soycamiloypunto/wearosignal
+
+AVVISO IMPORTANTE
+WearOSignal è un client indipendente e non ufficiale per Signal, non affiliato né approvato da Signal Messenger, LLC. Per collegare l'orologio è necessario un account Signal attivo sul telefono. Durante il collegamento, seleziona "Non trasferire i messaggi" se richiesto.
